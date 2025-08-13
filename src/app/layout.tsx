@@ -57,7 +57,7 @@ export const Layout = ({children}: Props) => {
       </Navbar>
       <Container fluid className="mt-4">
         {children}
-        </Container>
+      </Container>
     </>
   );
 };

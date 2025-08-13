@@ -57,7 +57,6 @@ export const FoldersAndChatsList = ({
           onAddNewFolder={addNewFolder}
         />
       </ListGroup>
-
     </>
   );
 };

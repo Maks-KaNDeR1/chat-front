@@ -1,5 +1,5 @@
 import {ChatType} from "@/src/entities/chat";
-import { FolderType } from "@/src/entities/folder";
+import {FolderType} from "@/src/entities/folder";
 
 export interface ChatListProps {
   chats: ChatType[];

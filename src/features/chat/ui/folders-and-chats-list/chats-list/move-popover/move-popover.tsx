@@ -1,7 +1,7 @@
-import React, { useRef } from "react";
-import { Overlay, Popover, ListGroup, FormControl } from "react-bootstrap";
-import { Folder, FolderX } from "react-bootstrap-icons";
-import { MovePopoverProps } from "./move-popover.props";
+import React, {useRef} from "react";
+import {Overlay, Popover, ListGroup, FormControl} from "react-bootstrap";
+import {Folder, FolderX} from "react-bootstrap-icons";
+import {MovePopoverProps} from "./move-popover.props";
 
 export const MovePopover = ({
   show,
@@ -39,7 +39,7 @@ export const MovePopover = ({
       rootClose
       onHide={onHide}
     >
-      <Popover id={`popover-move-${chatId}`} style={{ minWidth: 220 }}>
+      <Popover id={`popover-move-${chatId}`} style={{minWidth: 220}}>
         <Popover.Header as="h6" className="fw-bold">
           Move to folder
         </Popover.Header>
@@ -54,7 +54,7 @@ export const MovePopover = ({
             ref={inputRef}
           />
 
-          <ListGroup variant="flush" style={{ maxHeight: 180, overflowY: "auto" }}>
+          <ListGroup variant="flush" style={{maxHeight: 180, overflowY: "auto"}}>
             <ListGroup.Item action onClick={() => onFolderSelect(chatId, null)}>
               <FolderX className="me-2" />
               no folder

@@ -64,9 +64,9 @@ export const EditableListItem = ({
         action
         variant="dark"
         onClick={() => onSelect(id)}
-  className={`mb-1 d-flex border-0 justify-content-between align-items-center rounded-5 ${styles.listItem} ${
-    isActive ? styles.active : ""
-  }`}
+        className={`mb-1 d-flex border-0 justify-content-between align-items-center rounded-5 ${styles.listItem} ${
+          isActive ? styles.active : ""
+        }`}
       >
         {isEditing ? (
           <FormControl

@@ -111,7 +111,7 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
       } else {
         newChats[currentFolderKey][chatId] = updatedChat;
         saveFolderChats(currentFolderKey, newChats[currentFolderKey]);
-        
+
         if (chatId === currentChatId) {
           selectFolder(currentFolderKey);
         }

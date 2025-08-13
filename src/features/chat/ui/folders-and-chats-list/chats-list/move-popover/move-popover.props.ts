@@ -1,4 +1,4 @@
-import { FolderType } from "@/src/entities/folder";
+import {FolderType} from "@/src/entities/folder";
 
 export type MovePopoverProps = {
   show: boolean;

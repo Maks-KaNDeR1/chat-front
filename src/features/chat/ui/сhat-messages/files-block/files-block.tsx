@@ -205,16 +205,15 @@ export const FilesBlock = ({filesArr, onFileClick, filesFromUser}: FilesBlockPro
             marginTop: "0.1rem",
           }}
         >
-         <Button
-  onClick={() => alert(`Edit ${selectedIndices.size} items`)}
-  size="sm"
-  className={styles.btnSmallCommon}
-  variant="outline-secondary"
->
-  <Pencil />
-  Редактировать
-</Button>
-
+          <Button
+            onClick={() => alert(`Edit ${selectedIndices.size} items`)}
+            size="sm"
+            className={styles.btnSmallCommon}
+            variant="outline-secondary"
+          >
+            <Pencil />
+            Редактировать
+          </Button>
 
           <Button
             onClick={() => {
@@ -224,7 +223,7 @@ export const FilesBlock = ({filesArr, onFileClick, filesFromUser}: FilesBlockPro
               downloadFilesAsZip(selectedUrls);
             }}
             size="sm"
-  variant="outline-secondary"
+            variant="outline-secondary"
             className={styles.btnSmallCommon}
           >
             <Download />

@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { Form, InputGroup } from "react-bootstrap";
-import { Search, X } from "react-bootstrap-icons";
-import { SearchInputProps } from "./search-input.props";
+import React, {useState} from "react";
+import {Form, InputGroup} from "react-bootstrap";
+import {Search, X} from "react-bootstrap-icons";
+import {SearchInputProps} from "./search-input.props";
 
-export const SearchInput = ({ onSearch }: SearchInputProps) => {
+export const SearchInput = ({onSearch}: SearchInputProps) => {
   const [query, setQuery] = useState<string>("");
 
   const handleSearch = () => {
@@ -25,9 +25,7 @@ export const SearchInput = ({ onSearch }: SearchInputProps) => {
         placeholder="Search chats..."
         value={query}
         onKeyDown={handleKeyDown}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-          setQuery(e.target.value)
-        }
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
         aria-describedby="searchHelpBlock"
         className="rounded-start-pill"
       />
@@ -38,7 +36,7 @@ export const SearchInput = ({ onSearch }: SearchInputProps) => {
             setQuery("");
             onSearch("");
           }}
-          style={{ cursor: "pointer" }}
+          style={{cursor: "pointer"}}
           className="rounded-0"
         >
           <X />
@@ -47,7 +45,7 @@ export const SearchInput = ({ onSearch }: SearchInputProps) => {
 
       <InputGroup.Text
         onClick={handleSearch}
-        style={{ cursor: "pointer" }}
+        style={{cursor: "pointer"}}
         className="rounded-end-pill"
       >
         <Search />

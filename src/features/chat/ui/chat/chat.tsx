@@ -8,7 +8,7 @@ import {ChatMessages} from "../сhat-messages";
 import {ChatComponentProps} from "./chat.props";
 import {FoldersAndChatsList} from "../folders-and-chats-list";
 import styles from "./chat.module.css";
-import { HeaderChat } from "../header";
+import {HeaderChat} from "../header";
 
 const getCurrentChatName = (
   chatId: string | null,

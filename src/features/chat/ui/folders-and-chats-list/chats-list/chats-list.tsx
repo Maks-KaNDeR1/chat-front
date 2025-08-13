@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { ChatListProps } from "./chats-list.props";
-import { ChatType } from "@/src/entities/chat";
-import { EditableListItem } from "../editable-list-item";
-import { ReactSortable, SortableEvent } from "react-sortablejs";
-import { MovePopover } from "./move-popover";
-import { Folder } from "react-bootstrap-icons";
+import React, {useEffect, useState} from "react";
+import {ChatListProps} from "./chats-list.props";
+import {ChatType} from "@/src/entities/chat";
+import {EditableListItem} from "../editable-list-item";
+import {ReactSortable, SortableEvent} from "react-sortablejs";
+import {MovePopover} from "./move-popover";
+import {Folder} from "react-bootstrap-icons";
 
 type Props = ChatListProps & {
   sortable?: boolean;
@@ -66,7 +66,7 @@ export const ChatsList = ({
     <ReactSortable
       list={items}
       setList={setItems}
-      group={{ name: "chats", pull: true, put: true }}
+      group={{name: "chats", pull: true, put: true}}
       sort={sortable}
       animation={150}
       fallbackOnBody
@@ -77,7 +77,7 @@ export const ChatsList = ({
       }}
     >
       {items.map(chat => (
-        <div key={chat.id} data-id={chat.id} >
+        <div key={chat.id} data-id={chat.id}>
           <EditableListItem
             id={chat.id}
             name={chat.name}

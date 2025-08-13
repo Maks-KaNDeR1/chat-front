@@ -123,14 +123,14 @@ export const ChatInput = ({onSend}: ChatInputProps) => {
       )}
 
       <InputGroup>
-       <InputGroup.Text
-       color="info"
-         onClick={handleAttachClick}
-        style={{ cursor: "pointer" }}
-        className="rounded-start-pill"
-      >
+        <InputGroup.Text
+          color="info"
+          onClick={handleAttachClick}
+          style={{cursor: "pointer"}}
+          className="rounded-start-pill"
+        >
           <Paperclip />
-      </InputGroup.Text>
+        </InputGroup.Text>
         <Form.Control
           as="textarea"
           placeholder="Спросите что-нибудь..."
