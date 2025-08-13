@@ -1,7 +1,7 @@
 import {ProcessedFile} from "@/src/entities/dialog";
 import React, {useEffect, useRef, useState} from "react";
 import {Form, Button, InputGroup, Badge} from "react-bootstrap";
-import {Paperclip, X} from "react-bootstrap-icons";
+import {Paperclip, Send, X} from "react-bootstrap-icons";
 import {ChatInputProps} from "./chat-input.props";
 
 export const ChatInput = ({onSend}: ChatInputProps) => {
@@ -97,7 +97,7 @@ export const ChatInput = ({onSend}: ChatInputProps) => {
             marginBottom: 8,
             padding: 8,
             border: "1px solid #ddd",
-            borderRadius: 4,
+            borderRadius: 24,
             backgroundColor: "#f8f9fa",
             display: "flex",
             gap: 8,
@@ -123,12 +123,17 @@ export const ChatInput = ({onSend}: ChatInputProps) => {
       )}
 
       <InputGroup>
-        <Button variant="outline-secondary" onClick={handleAttachClick}>
+       <InputGroup.Text
+       color="info"
+         onClick={handleAttachClick}
+        style={{ cursor: "pointer" }}
+        className="rounded-start-pill"
+      >
           <Paperclip />
-        </Button>
+      </InputGroup.Text>
         <Form.Control
           as="textarea"
-          placeholder="Send Messages..."
+          placeholder="Спросите что-нибудь..."
           value={message}
           onChange={e => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -136,8 +141,8 @@ export const ChatInput = ({onSend}: ChatInputProps) => {
           ref={textareaRef}
           style={{resize: "none"}}
         />
-        <Button variant="primary" onClick={handleSend}>
-          Send
+        <Button variant="secondary" className="rounded-end-pill" onClick={handleSend}>
+          <Send />
         </Button>
         <input
           type="file"

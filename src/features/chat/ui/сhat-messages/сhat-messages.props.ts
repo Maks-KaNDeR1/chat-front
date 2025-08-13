@@ -1,4 +1,3 @@
-import {FolderType} from "@/src/app/providers";
 import {DialogType, ProcessedFile} from "@/src/entities/dialog";
 
 export interface ChatMessagesProps {

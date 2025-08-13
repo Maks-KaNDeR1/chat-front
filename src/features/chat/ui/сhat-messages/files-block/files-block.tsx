@@ -1,7 +1,7 @@
 import React, {useEffect, useRef, useState} from "react";
 import {downloadFilesAsZip} from "@/src/shared/lib";
 import {Button, Container, Form, Image} from "react-bootstrap";
-import {Download, PencilSquare, X} from "react-bootstrap-icons";
+import {Download, Pencil, PencilSquare, X, XCircle} from "react-bootstrap-icons";
 import styles from "./files-block.module.css";
 import {FilesBlockProps} from "./files-block.props";
 
@@ -142,8 +142,8 @@ export const FilesBlock = ({filesArr, onFileClick, filesFromUser}: FilesBlockPro
                       : `data:${file.type};base64,${file.base64}`
                   }
                   alt={`Image ${idx}`}
-                  width={40}
-                  height={50}
+                  width={50}
+                  height={60}
                   style={{
                     borderRadius: "0.25rem",
                     filter: isSelected ? "brightness(0.8)" : undefined,
@@ -185,6 +185,7 @@ export const FilesBlock = ({filesArr, onFileClick, filesFromUser}: FilesBlockPro
         <Button
           onClick={onScrollRight}
           variant="secondary"
+          size="sm"
           className={`${styles.scrollButton} ${styles.scrollButtonRight}`}
           aria-label="Scroll right"
         >
@@ -204,14 +205,16 @@ export const FilesBlock = ({filesArr, onFileClick, filesFromUser}: FilesBlockPro
             marginTop: "0.1rem",
           }}
         >
-          <Button
-            onClick={() => alert(`Edit ${selectedIndices.size} items`)}
-            size="sm"
-            className={styles.btnSmallCommon}
-          >
-            Edit
-            <PencilSquare />
-          </Button>
+         <Button
+  onClick={() => alert(`Edit ${selectedIndices.size} items`)}
+  size="sm"
+  className={styles.btnSmallCommon}
+  variant="outline-secondary"
+>
+  <Pencil />
+  Редактировать
+</Button>
+
 
           <Button
             onClick={() => {
@@ -221,11 +224,11 @@ export const FilesBlock = ({filesArr, onFileClick, filesFromUser}: FilesBlockPro
               downloadFilesAsZip(selectedUrls);
             }}
             size="sm"
-            variant="success"
+  variant="outline-secondary"
             className={styles.btnSmallCommon}
           >
-            Download
             <Download />
+            Загрузить
           </Button>
 
           <Button
@@ -234,8 +237,8 @@ export const FilesBlock = ({filesArr, onFileClick, filesFromUser}: FilesBlockPro
             variant="outline-secondary"
             className={styles.btnSmallCommon}
           >
-            Reset
-            <X />
+            <XCircle />
+            Сбросить
           </Button>
         </div>
       )}

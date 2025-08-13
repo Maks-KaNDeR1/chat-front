@@ -1,13 +1,14 @@
 import React, {useState} from "react";
 import Head from "next/head";
-import {useChatContext, useDialogContext} from "@/src/app/providers";
+import {useChatContext, useDialogContext, useFolderContext} from "@/src/app/providers";
 import {ChatType} from "@/src/entities/chat";
 import {Col, Row, Offcanvas, Button} from "react-bootstrap";
-import {SearchInput} from "../search-input";
+import {SearchInput} from "../header/search-input";
 import {ChatMessages} from "../сhat-messages";
 import {ChatComponentProps} from "./chat.props";
 import {FoldersAndChatsList} from "../folders-and-chats-list";
 import styles from "./chat.module.css";
+import { HeaderChat } from "../header";
 
 const getCurrentChatName = (
   chatId: string | null,
@@ -43,6 +44,7 @@ export const ChatComponent = ({
 }: ChatComponentProps) => {
   const {getDialogByChatId} = useDialogContext();
   const {chats, addNewChat} = useChatContext();
+  const {addNewFolder} = useFolderContext();
   const [showSidebar, setShowSidebar] = useState(false);
 
   const currentDialog = currentChatId ? getDialogByChatId(currentChatId) : [];
@@ -58,11 +60,11 @@ export const ChatComponent = ({
 
       <Row>
         <Col
-          lg={6}
+          lg={4}
           className="d-none d-lg-block"
           style={{height: "calc(100vh - 80px)", borderRadius: 40}}
         >
-          <SearchInput onSearch={handleSearch} />
+          <HeaderChat handleSearch={handleSearch} addNewFolder={addNewFolder} />
 
           <FoldersAndChatsList
             currentChatId={currentChatId}
@@ -74,7 +76,7 @@ export const ChatComponent = ({
           />
         </Col>
 
-        <Col xs={12} lg={6} style={{height: "calc(100vh - 80px)", position: "relative"}}>
+        <Col xs={12} lg={8} style={{height: "calc(100vh - 80px)", position: "relative"}}>
           <Button
             variant="light"
             onClick={() => setShowSidebar(true)}

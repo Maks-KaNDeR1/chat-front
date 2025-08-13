@@ -1,5 +1,5 @@
-import {FolderType} from "@/src/app/providers";
 import {ChatType} from "@/src/entities/chat";
+import {FolderType} from "@/src/entities/folder";
 
 export type FoldersAndChatsListProps = {
   currentChatId: string | null;

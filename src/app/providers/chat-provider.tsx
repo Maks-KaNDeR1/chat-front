@@ -47,7 +47,7 @@ export function useChatContext() {
 export function ChatProvider({children}: {children: React.ReactNode}) {
   const [chats, setChats] = useState<Record<string, Record<string, ChatType>>>({});
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
-  const {currentFolderId, selectFolder} = useFolderContext();
+  const {selectFolder} = useFolderContext();
   const {deleteDialogsByChatId} = useDialogContext();
   const router = useRouter();
 
@@ -73,7 +73,7 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
 
     if (currentChatId === id) {
       setCurrentChatId(null);
-      router.push(currentFolderId ? `/${currentFolderId}` : `/`);
+      router.push(`/`);
     }
   };
 
@@ -90,14 +90,20 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
       const oldChat = newChats[currentFolderKey][chatId];
       const updatedChat = {...oldChat, ...updatedFields};
 
+      let newFolderKey = currentFolderKey;
+
       if (
         updatedFields.folder !== undefined &&
         updatedFields.folder !== currentFolderKey
       ) {
-        const newFolderKey = updatedFields.folder || "default";
+        newFolderKey = updatedFields.folder || "default";
 
         delete newChats[currentFolderKey][chatId];
         saveFolderChats(currentFolderKey, newChats[currentFolderKey]);
+
+        if (chatId === currentChatId) {
+          selectFolder(null);
+        }
 
         if (!newChats[newFolderKey]) newChats[newFolderKey] = {};
         newChats[newFolderKey][chatId] = {...updatedChat, folder: newFolderKey};
@@ -105,6 +111,19 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
       } else {
         newChats[currentFolderKey][chatId] = updatedChat;
         saveFolderChats(currentFolderKey, newChats[currentFolderKey]);
+        
+        if (chatId === currentChatId) {
+          selectFolder(currentFolderKey);
+        }
+      }
+
+      // если этот чат текущий, меняем роутер
+      if (chatId === currentChatId) {
+        if (newFolderKey && newFolderKey !== "default") {
+          router.push(`/${newFolderKey}/${chatId}`);
+        } else {
+          router.push(`/${chatId}`);
+        }
       }
 
       return newChats;

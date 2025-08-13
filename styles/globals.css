@@ -1,6 +1,11 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* --bs-btn-border-radius: 5rem !important; */
+}
+
+.btn {
+  --bs-btn-border-radius: 5rem !important;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -46,4 +51,14 @@ a {
   opacity: 0 !important;
   top: 10;
   left: 14;
+}
+
+.form-check-input {
+background-color: #ced4da !important;
+border-radius: 4rem!important;
+    border: none!important;
+}
+
+.form-check-input:focus {
+      box-shadow: 0 0 0 .25rem #ced4da4d !important; 
 }

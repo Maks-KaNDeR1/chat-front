@@ -52,13 +52,7 @@ export const useChatPage = () => {
     [selectFolder, selectChat, router]
   );
 
-  const handleSelectFolder = useCallback(
-    (folderId: string | null) => {
-      selectFolder(folderId);
-      router.push(folderId ? `/${folderId}` : "/");
-    },
-    [selectFolder, router]
-  );
+  const handleSelectFolder = (folderId: string | null) => selectFolder(folderId);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -91,7 +85,7 @@ export const useChatPage = () => {
         pendingMessage.files
       );
       setPendingMessage(null);
-      // handleSelectChat(currentChatId);
+      handleSelectChat(currentChatId);
     }
   }, [currentChatId, pendingMessage, sendMessageToChat]);
 

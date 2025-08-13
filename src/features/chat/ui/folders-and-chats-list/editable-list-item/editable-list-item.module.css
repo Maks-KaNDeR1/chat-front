@@ -1,6 +1,7 @@
 .listItem {
   cursor: pointer;
   user-select: none;
+  color: #111;
 }
 
 .text {
@@ -9,4 +10,8 @@
 
 .input {
   user-select: text;
+}
+
+.active {
+  background-color: #adb5bd; 
 }

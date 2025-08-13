@@ -62,9 +62,11 @@ export const EditableListItem = ({
       <ListGroup.Item
         as="li"
         action
-        variant={isActive ? "secondary" : "light"}
+        variant="dark"
         onClick={() => onSelect(id)}
-        className={`mb-1 d-flex justify-content-between align-items-center ${styles.listItem}`}
+  className={`mb-1 d-flex border-0 justify-content-between align-items-center rounded-5 ${styles.listItem} ${
+    isActive ? styles.active : ""
+  }`}
       >
         {isEditing ? (
           <FormControl
@@ -89,7 +91,7 @@ export const EditableListItem = ({
                 <Button
                   variant="link"
                   size="sm"
-                  className={`p-0 text-secondary ${styles.btn}`}
+                  className={`p-0 text-dark ${styles.btn}`}
                   onClick={e => {
                     e.stopPropagation();
                     if (onMoveClick) onMoveClick(e);
@@ -102,7 +104,7 @@ export const EditableListItem = ({
               <Button
                 variant="link"
                 size="sm"
-                className={`p-0 text-secondary ${styles.btn}`}
+                className={`p-0 text-dark ${styles.btn}`}
                 onClick={e => {
                   e.stopPropagation();
                   setIsEditing(true);
@@ -113,7 +115,7 @@ export const EditableListItem = ({
               <Button
                 variant="link"
                 size="sm"
-                className={`p-0 text-secondary ${styles.btn}`}
+                className={`p-0 text-dark ${styles.btn}`}
                 onClick={handleDeleteClick}
               >
                 <Trash />

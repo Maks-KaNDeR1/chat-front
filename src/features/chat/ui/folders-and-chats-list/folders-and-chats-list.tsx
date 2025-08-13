@@ -5,17 +5,7 @@ import {ChatsList} from "./chats-list";
 import {useChatContext, useFolderContext} from "@/src/app/providers";
 import {FoldersAndChatsListProps} from "./folders-and-chats-list.props";
 import {AddItemModal} from "@/src/shared/ui";
-
-
-// // Loop through each nested sortable element
-// for (var i = 0; i < nestedSortables.length; i++) {
-// 	new Sortable(nestedSortables[i], {
-// 		group: 'nested',
-// 		animation: 150,
-// 		fallbackOnBody: true,
-// 		swapThreshold: 0.65
-// 	});
-// }
+import {ChatType} from "@/src/entities/chat";
 
 export const FoldersAndChatsList = ({
   chatsList,
@@ -28,18 +18,14 @@ export const FoldersAndChatsList = ({
   const {chats, updateChatName, deleteChat, updateChatById} = useChatContext();
   const {addNewFolder, deleteFolder, updateFolderName} = useFolderContext();
 
-  const [showAddFolderModal, setShowAddFolderModal] = useState<boolean>(false);
-
   const handleMoveChatToFolder = (chatId: string, folderId: string | null) => {
     updateChatById(chatId, {folder: folderId});
   };
 
+  const defaultChats: ChatType[] = Object.values(chats["default"] || {});
+
   return (
     <>
-      <Button className="mb-2" size="sm" onClick={() => setShowAddFolderModal(true)}>
-        Add Folder
-      </Button>
-
       <ListGroup style={{overflowY: "auto", height: "calc(100% - 93px)"}}>
         <FoldersList
           folders={foldersList}
@@ -58,27 +44,20 @@ export const FoldersAndChatsList = ({
           onAddNewFolder={addNewFolder}
         />
 
-        {chats["default"] && Object.keys(chats["default"]).length > 0 && (
-          <ChatsList
-            chats={chatsList}
-            currentChatId={currentChatId}
-            onSelectChat={(chatId: string) => handleSelectChat(chatId, null)}
-            onRenameChat={updateChatName}
-            onDeleteChat={deleteChat}
-            folders={foldersList}
-            onMoveChatToFolder={handleMoveChatToFolder}
-            onAddNewFolder={addNewFolder}
-          />
-        )}
+        <ChatsList
+          sortable
+          dropFolderId={null}
+          chats={defaultChats}
+          currentChatId={currentChatId}
+          onSelectChat={(chatId: string) => handleSelectChat(chatId, null)}
+          onRenameChat={updateChatName}
+          onDeleteChat={deleteChat}
+          folders={foldersList}
+          onMoveChatToFolder={handleMoveChatToFolder}
+          onAddNewFolder={addNewFolder}
+        />
       </ListGroup>
 
-      <AddItemModal
-        show={showAddFolderModal}
-        onClose={() => setShowAddFolderModal(false)}
-        onAdd={addNewFolder}
-        title="New folder"
-        placeholder="Enter folder name"
-      />
     </>
   );
 };

@@ -1,8 +1,16 @@
-import React, {useState, useRef, useEffect} from "react";
-import {Overlay, Popover, ListGroup, FormControl} from "react-bootstrap";
-import {Folder, FolderX} from "react-bootstrap-icons";
-import {EditableListItem} from "../editable-list-item";
-import {ChatListProps} from "./chats-list.props";
+import React, { useEffect, useState } from "react";
+import { ChatListProps } from "./chats-list.props";
+import { ChatType } from "@/src/entities/chat";
+import { EditableListItem } from "../editable-list-item";
+import { ReactSortable, SortableEvent } from "react-sortablejs";
+import { MovePopover } from "./move-popover";
+import { Folder } from "react-bootstrap-icons";
+
+type Props = ChatListProps & {
+  sortable?: boolean;
+  /** Куда помещать чат при дропе в этот список (null = "вне папок") */
+  dropFolderId?: string | null;
+};
 
 export const ChatsList = ({
   chats,
@@ -13,14 +21,19 @@ export const ChatsList = ({
   folders,
   onMoveChatToFolder,
   onAddNewFolder,
-}: ChatListProps) => {
+  sortable = false,
+  dropFolderId = null,
+}: Props) => {
   const [showMoveMenuId, setShowMoveMenuId] = useState<string | null>(null);
   const [target, setTarget] = useState<HTMLElement | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredFolders, setFilteredFolders] = useState(folders);
   const [newFolderName, setNewFolderName] = useState("");
+  const [items, setItems] = useState<ChatType[]>(chats);
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    setItems(chats);
+  }, [chats]);
 
   useEffect(() => {
     const filtered = folders.filter(folder =>
@@ -49,23 +62,22 @@ export const ChatsList = ({
     setShowMoveMenuId(null);
   };
 
-  const handleNewFolderKeyDown = async (
-    e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
-    chatId: string
-  ) => {
-    if (e.key === "Enter" && newFolderName.trim()) {
-      const createdFolderId = await onAddNewFolder(newFolderName.trim());
-      onMoveChatToFolder(chatId, createdFolderId);
-      setShowMoveMenuId(null);
-      setSearchTerm("");
-      setNewFolderName("");
-    }
-  };
-
   return (
-    <>
-      {chats.map(chat => (
-        <React.Fragment key={chat.id}>
+    <ReactSortable
+      list={items}
+      setList={setItems}
+      group={{ name: "chats", pull: true, put: true }}
+      sort={sortable}
+      animation={150}
+      fallbackOnBody
+      swapThreshold={0.65}
+      onAdd={(evt: SortableEvent) => {
+        const chatId = evt.item.dataset.id as string;
+        onMoveChatToFolder(chatId, dropFolderId ?? null);
+      }}
+    >
+      {items.map(chat => (
+        <div key={chat.id} data-id={chat.id} >
           <EditableListItem
             id={chat.id}
             name={chat.name}
@@ -76,69 +88,22 @@ export const ChatsList = ({
             moveIcon={<Folder />}
             onMoveClick={e => handleMoveIconClick(chat.id, e)}
           />
-          <Overlay
+
+          <MovePopover
             show={showMoveMenuId === chat.id}
             target={target}
-            placement="bottom"
-            containerPadding={8}
-            rootClose
+            chatId={chat.id}
+            folders={filteredFolders}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            newFolderName={newFolderName}
+            setNewFolderName={setNewFolderName}
+            onFolderSelect={handleFolderSelect}
+            onAddNewFolder={onAddNewFolder}
             onHide={() => setShowMoveMenuId(null)}
-          >
-            <Popover id={`popover-move-${chat.id}`} style={{minWidth: 220}}>
-              <Popover.Header as="h6" className="fw-bold">
-                Move to folder
-              </Popover.Header>
-              <Popover.Body>
-                <FormControl
-                  placeholder="Search folders..."
-                  size="sm"
-                  autoFocus
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  className="mb-2"
-                  ref={inputRef}
-                />
-
-                <ListGroup variant="flush" style={{maxHeight: 180, overflowY: "auto"}}>
-                  <ListGroup.Item
-                    action
-                    onClick={() => handleFolderSelect(chat.id, null)}
-                  >
-                    <FolderX className="me-2" />
-                    no folder
-                  </ListGroup.Item>
-
-                  {filteredFolders.length > 0 ? (
-                    filteredFolders.map(folder => (
-                      <ListGroup.Item
-                        key={folder.id}
-                        action
-                        onClick={() => handleFolderSelect(chat.id, folder.id)}
-                      >
-                        <Folder className="me-2" />
-                        {folder.name}
-                      </ListGroup.Item>
-                    ))
-                  ) : (
-                    <ListGroup.Item disabled className="text-muted">
-                      Папки не найдены
-                    </ListGroup.Item>
-                  )}
-                </ListGroup>
-
-                <FormControl
-                  placeholder="Create new foler"
-                  size="sm"
-                  value={newFolderName}
-                  onChange={e => setNewFolderName(e.target.value)}
-                  onKeyDown={e => handleNewFolderKeyDown(e, chat.id)}
-                  className="mt-2"
-                />
-              </Popover.Body>
-            </Popover>
-          </Overlay>
-        </React.Fragment>
+          />
+        </div>
       ))}
-    </>
+    </ReactSortable>
   );
 };

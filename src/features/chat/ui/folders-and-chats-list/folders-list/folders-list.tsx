@@ -1,9 +1,10 @@
-import {EditableListItem} from "../editable-list-item";
-import {Folder, FolderX} from "react-bootstrap-icons";
+import React from "react";
+import {ChatType} from "@/src/entities/chat";
 import {FoldersListProps} from "./folders-list.props";
-import {ListGroup} from "react-bootstrap";
-import React, {useEffect} from "react";
+import {EditableListItem} from "../editable-list-item";
 import {ChatsList} from "../chats-list";
+import {ListGroup} from "react-bootstrap";
+import {Folder, FolderX} from "react-bootstrap-icons";
 
 export const FoldersList = ({
   folders,
@@ -19,25 +20,24 @@ export const FoldersList = ({
   onAddNewFolder,
   onMoveChatToFolder,
 }: FoldersListProps) => {
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const {chatId, folderId} = (e as CustomEvent).detail;
-      onSelectChat(chatId, folderId);
-    };
-
-    window.addEventListener("chatMove", handler);
-    return () => window.removeEventListener("chatMove", handler);
-  }, [onSelectChat]);
-
   return (
     <ListGroup>
       {folders.map(folder => {
         const isActive = currentFolderId === folder.id;
-        const hasChats = chats[folder.id] && Object.keys(chats[folder.id]).length > 0;
+        const folderChats: ChatType[] = Object.values(chats[folder.id] || {});
+        const hasChats = folderChats.length > 0;
 
         return (
           <React.Fragment key={folder.id}>
-            <div data-folder-id={folder.id}>
+            <div
+              data-folder-id={folder.id}
+              onDragOver={e => {
+                e.preventDefault();
+                if (!isActive) {
+                  onSelectFolder(folder.id);
+                }
+              }}
+            >
               <EditableListItem
                 id={folder.id}
                 name={folder.name}
@@ -54,11 +54,14 @@ export const FoldersList = ({
                 onDelete={onDeleteFolder}
               />
             </div>
-            {isActive && hasChats && (
+
+            {isActive && (
               <div style={{paddingLeft: 24}}>
                 <ChatsList
+                  sortable
+                  dropFolderId={folder.id}
                   currentChatId={currentChatId}
-                  chats={Object.values(chats[folder.id])}
+                  chats={folderChats}
                   onSelectChat={(id: string) => onSelectChat(id, folder.id)}
                   onRenameChat={onRenameChat}
                   onDeleteChat={onDeleteChat}
@@ -66,18 +69,19 @@ export const FoldersList = ({
                   onMoveChatToFolder={onMoveChatToFolder}
                   onAddNewFolder={onAddNewFolder}
                 />
-              </div>
-            )}
-            {isActive && !hasChats && (
-              <div
-                style={{
-                  paddingLeft: 24,
-                  fontStyle: "italic",
-                  color: "#888",
-                  paddingBottom: 6,
-                }}
-              >
-                (This folder is empty)
+
+                {!hasChats && (
+                  <div
+                    style={{
+                      fontStyle: "italic",
+                      color: "#888",
+                      paddingBottom: 6,
+                      marginTop: 6,
+                    }}
+                  >
+                    (This folder is empty)
+                  </div>
+                )}
               </div>
             )}
           </React.Fragment>

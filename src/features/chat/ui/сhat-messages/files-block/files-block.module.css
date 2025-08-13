@@ -23,11 +23,12 @@
 .btnSmallCommon {
   white-space: nowrap;
   z-index: 10;
-  font-size: 10px;
-  padding: 0.15rem 0.3rem;
+  font-size: 11px;
+  padding: 0.15rem 0.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 3;
 }
 
 .btnSmallCommon svg {
@@ -38,20 +39,6 @@
   margin-top: 1px;
 }
 
-.btnScroll {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  transform: translateY(-50%);
-  opacity: 0.5;
-  border: none;
-  z-index: 10;
-  border-radius: 0 0.25rem 0.25rem 0;
-  user-select: none;
-  font-size: 10px;
-  padding: 0.15rem;
-}
-
 .scrollButton {
   position: absolute;
   top: 50%;
@@ -60,12 +47,14 @@
   border: none;
   z-index: 10;
   user-select: none;
-  font-size: 10px;
-  padding: 0.15rem;
+  /* font-size: 14px; */
+  padding: 0.18rem;
+  color: #000;
 }
 
 .scrollButtonLeft {
   left: 0;
+  
   border-radius: 0 0.25rem 0.25rem 0;
 }
 
@@ -75,14 +64,14 @@
 }
 
 .fileTypeShortBox {
-  width: 40;
-  height: 50;
+  width: 50;
+  height: 60;
   border-radius: 0.25rem;
-  background-color: #ccc;
+  background-color: #a5a5a5;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10;
+  font-size: 14;
   color: #555;
   text-align: center;
   padding: 4;
