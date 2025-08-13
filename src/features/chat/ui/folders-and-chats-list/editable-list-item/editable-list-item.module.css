@@ -1,0 +1,12 @@
+.listItem {
+  cursor: pointer;
+  user-select: none;
+}
+
+.text {
+  user-select: none;
+}
+
+.input {
+  user-select: text;
+}

@@ -1,0 +1,27 @@
+.burgerBtn {
+  --bs-btn-padding-x: 0.55rem;
+  --bs-btn-padding-y: 0.225rem;
+}
+
+.chat-folder-transition-enter {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+.chat-folder-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    opacity 300ms ease,
+    transform 300ms ease;
+}
+.chat-folder-transition-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+.chat-folder-transition-exit-active {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition:
+    opacity 300ms ease,
+    transform 300ms ease;
+}
