@@ -1,21 +1,24 @@
 import {useEffect, useRef, useState} from "react";
 import {useRouter} from "next/router";
 import {parsePath} from "@/src/shared/lib";
+import {Folder} from "../../folder";
+import {Chat} from "../model";
 
 export const useInitSelectionFromPath = (
-  folders: Record<string, any>,
-  chats: Record<string, Record<string, any>>,
+  folders: Record<string, Folder>,
+  chats: Record<string, Record<string, Chat>>,
   currentChatId: string | null,
   currentFolderId: string | null,
   selectFolder: (id: string | null) => void,
-  selectChat: (id: string | null) => void
+  selectChat: (id: string | null) => void,
+  isLoaded: boolean
 ) => {
   const [notFound, setNotFound] = useState(false);
   const initializedRef = useRef(false);
   const router = useRouter();
 
   useEffect(() => {
-    if (!router.isReady || initializedRef.current) return;
+    if ((!router.isReady || initializedRef.current) && !isLoaded) return;
 
     const finish = (found = true) => {
       if (!found) setNotFound(true);
@@ -29,6 +32,8 @@ export const useInitSelectionFromPath = (
     const folderExists = folderId && folders[folderId];
     const chatExists =
       chatId && Object.values(chats).some(group => group[chatId as string]);
+
+    console.log(folderId, chatId);
 
     if (slugParts.length === 1) {
       if (folderExists && !chatId) {
@@ -55,11 +60,10 @@ export const useInitSelectionFromPath = (
     router.query.slug,
     folders,
     chats,
-    currentChatId,
-    currentFolderId,
-    selectFolder,
-    selectChat,
+    // selectFolder,
+    // selectChat,
+    isLoaded,
   ]);
 
-  return {notFound};
+  return {notFound: false};
 };

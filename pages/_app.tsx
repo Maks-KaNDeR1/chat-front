@@ -1,5 +1,5 @@
 import {Layout} from "@/src/app/layout";
-import {ChatProvider, DialogProvider, FoldersProvider} from "@/src/app/providers";
+import {ChatProvider, MessageProvider, FoldersProvider} from "@/src/app/providers";
 import "@/styles/globals.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
@@ -11,7 +11,7 @@ export default function App({Component, pageProps}: AppProps) {
   return (
     <FoldersProvider>
       <ChatProvider>
-        <DialogProvider>
+        <MessageProvider>
           <SnackbarProvider
             className="snackbar-styles"
             action={key => (
@@ -28,7 +28,7 @@ export default function App({Component, pageProps}: AppProps) {
               <Component {...pageProps} />
             </Layout>
           </SnackbarProvider>
-        </DialogProvider>
+        </MessageProvider>
       </ChatProvider>
     </FoldersProvider>
   );

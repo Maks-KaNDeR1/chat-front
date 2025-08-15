@@ -1,15 +1,10 @@
-export interface ChatsCollection {
-  [key: string]: ChatType;
-}
+import {Folder} from "../../folder";
+import {User} from "../../user";
 
-export interface ChatType {
+export type Chat = {
   id: string;
+  owner: User;
+  folder: Folder | null;
   name: string;
-  folder: string | null;
-  date: string;
-}
-
-export interface ChatRequestType {
-  name: string;
-  folder: string | null;
-}
+  createdAt: string;
+};

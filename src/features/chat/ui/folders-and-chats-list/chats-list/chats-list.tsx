@@ -1,109 +1,127 @@
 import React, {useEffect, useState} from "react";
 import {ChatListProps} from "./chats-list.props";
-import {ChatType} from "@/src/entities/chat";
+import {Chat} from "@/src/entities/chat";
 import {EditableListItem} from "../editable-list-item";
-import {ReactSortable, SortableEvent} from "react-sortablejs";
 import {MovePopover} from "./move-popover";
 import {Folder} from "react-bootstrap-icons";
 
-type Props = ChatListProps & {
+interface ExtendedChatListProps extends ChatListProps {
+  draggedChatId: string | null;
+  setDraggedChatId: (id: string | null) => void;
   sortable?: boolean;
-  /** Куда помещать чат при дропе в этот список (null = "вне папок") */
   dropFolderId?: string | null;
-};
+}
 
-export const ChatsList = ({
-  chats,
-  currentChatId,
-  onSelectChat,
-  onDeleteChat,
-  onRenameChat,
-  folders,
-  onMoveChatToFolder,
-  onAddNewFolder,
-  sortable = false,
-  dropFolderId = null,
-}: Props) => {
-  const [showMoveMenuId, setShowMoveMenuId] = useState<string | null>(null);
-  const [target, setTarget] = useState<HTMLElement | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredFolders, setFilteredFolders] = useState(folders);
-  const [newFolderName, setNewFolderName] = useState("");
-  const [items, setItems] = useState<ChatType[]>(chats);
+export const ChatsList = React.memo(
+  ({
+    chats,
+    currentChatId,
+    onSelectChat,
+    onDeleteChat,
+    onRenameChat,
+    folders,
+    onMoveChatToFolder,
+    onAddNewFolder,
+    sortable = false,
+    dropFolderId = null,
+    draggedChatId,
+    setDraggedChatId,
+  }: ExtendedChatListProps) => {
+    const [showMoveMenuId, setShowMoveMenuId] = useState<string | null>(null);
+    const [target, setTarget] = useState<HTMLElement | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filteredFolders, setfilteredFolders] = useState(folders);
+    const [newFolderName, setNewFolderName] = useState("");
+    const [items, setItems] = useState<Chat[]>(chats);
 
-  useEffect(() => {
-    setItems(chats);
-  }, [chats]);
+    useEffect(() => {
+      setItems(chats);
+    }, [chats]);
 
-  useEffect(() => {
-    const filtered = folders.filter(folder =>
-      folder.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredFolders(filtered);
-  }, [searchTerm, folders]);
+    useEffect(() => {
+      const filtered = folders.filter(folder =>
+        folder.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setfilteredFolders(filtered);
+    }, [searchTerm, folders]);
 
-  const handleMoveIconClick = (chatId: string, e: React.MouseEvent<HTMLElement>) => {
-    e.stopPropagation();
-    if (showMoveMenuId === chatId) {
+    const handleMoveIconClick = (chatId: string, e: React.MouseEvent<HTMLElement>) => {
+      e.stopPropagation();
+      if (showMoveMenuId === chatId) {
+        setShowMoveMenuId(null);
+        setTarget(null);
+        setSearchTerm("");
+        setNewFolderName("");
+      } else {
+        setShowMoveMenuId(chatId);
+        setTarget(e.currentTarget);
+        setSearchTerm("");
+        setNewFolderName("");
+      }
+    };
+
+    const handleFolderSelect = (chatId: string, folderId: string | null) => {
+      onMoveChatToFolder(chatId, folderId);
       setShowMoveMenuId(null);
-      setTarget(null);
-      setSearchTerm("");
-      setNewFolderName("");
-    } else {
-      setShowMoveMenuId(chatId);
-      setTarget(e.currentTarget);
-      setSearchTerm("");
-      setNewFolderName("");
-    }
-  };
+    };
 
-  const handleFolderSelect = (chatId: string, folderId: string | null) => {
-    onMoveChatToFolder(chatId, folderId);
-    setShowMoveMenuId(null);
-  };
+    const handleDragStart = (e: React.DragEvent, chat: Chat) => {
+      setDraggedChatId(chat.id);
+      e.dataTransfer.setData("chatId", chat.id);
+      e.dataTransfer.effectAllowed = "move";
+    };
 
-  return (
-    <ReactSortable
-      list={items}
-      setList={setItems}
-      group={{name: "chats", pull: true, put: true}}
-      sort={sortable}
-      animation={150}
-      fallbackOnBody
-      swapThreshold={0.65}
-      onAdd={(evt: SortableEvent) => {
-        const chatId = evt.item.dataset.id as string;
-        onMoveChatToFolder(chatId, dropFolderId ?? null);
-      }}
-    >
-      {items.map(chat => (
-        <div key={chat.id} data-id={chat.id}>
-          <EditableListItem
-            id={chat.id}
-            name={chat.name}
-            isActive={currentChatId === chat.id}
-            onSelect={onSelectChat}
-            onRename={onRenameChat}
-            onDelete={onDeleteChat}
-            moveIcon={<Folder />}
-            onMoveClick={e => handleMoveIconClick(chat.id, e)}
-          />
+    const handleDragEnd = () => {
+      setDraggedChatId(null);
+    };
 
-          <MovePopover
-            show={showMoveMenuId === chat.id}
-            target={target}
-            chatId={chat.id}
-            folders={filteredFolders}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            newFolderName={newFolderName}
-            setNewFolderName={setNewFolderName}
-            onFolderSelect={handleFolderSelect}
-            onAddNewFolder={onAddNewFolder}
-            onHide={() => setShowMoveMenuId(null)}
-          />
-        </div>
-      ))}
-    </ReactSortable>
-  );
-};
+    const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+    };
+
+    return (
+      <div onDragOver={handleDragOver}>
+        {items.map(chat => (
+          <div
+            key={chat.id}
+            data-id={chat.id}
+            draggable={sortable}
+            onDragStart={e => handleDragStart(e, chat)}
+            onDragEnd={handleDragEnd}
+            style={{
+              opacity: draggedChatId === chat.id ? 0.5 : 1,
+              transition: "all 0.2s",
+              padding: "2px",
+              borderRadius: "4px",
+            }}
+          >
+            <EditableListItem
+              id={chat.id}
+              name={chat.name}
+              isActive={currentChatId === chat.id}
+              onSelect={onSelectChat}
+              onRename={(id: string, newName: string) => onRenameChat(id, newName, chat)}
+              onDelete={onDeleteChat}
+              moveIcon={<Folder />}
+              onMoveClick={e => handleMoveIconClick(chat.id, e)}
+              draggable={sortable}
+            />
+            <MovePopover
+              show={showMoveMenuId === chat.id}
+              target={target}
+              chatId={chat.id}
+              folders={filteredFolders}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              newFolderName={newFolderName}
+              setNewFolderName={setNewFolderName}
+              onFolderSelect={handleFolderSelect}
+              onAddNewFolder={onAddNewFolder}
+              onHide={() => setShowMoveMenuId(null)}
+            />
+          </div>
+        ))}
+      </div>
+    );
+  }
+);

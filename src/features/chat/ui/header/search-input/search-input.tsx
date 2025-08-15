@@ -22,7 +22,7 @@ export const SearchInput = ({onSearch}: SearchInputProps) => {
       <Form.Control
         type="text"
         id="searchChats"
-        placeholder="Search chats..."
+        placeholder="Поиск папок и чатов..."
         value={query}
         onKeyDown={handleKeyDown}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}

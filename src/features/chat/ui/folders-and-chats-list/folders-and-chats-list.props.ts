@@ -1,11 +1,11 @@
-import {ChatType} from "@/src/entities/chat";
-import {FolderType} from "@/src/entities/folder";
+import {Chat} from "@/src/entities/chat";
+import {Folder} from "@/src/entities/folder";
 
 export type FoldersAndChatsListProps = {
   currentChatId: string | null;
   currentFolderId: string | null;
-  chatsList: ChatType[];
-  foldersList: FolderType[];
+  chatsList: Chat[];
+  foldersList: Folder[];
   handleSelectChat: (chatId: string, folderId: string | null) => void;
   handleSelectFolder: (folderId: string | null) => void;
 };

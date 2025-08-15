@@ -1,14 +1,12 @@
-import {ChatType} from "@/src/entities/chat";
-import {ProcessedFile} from "@/src/entities/dialog";
-import {FolderType} from "@/src/entities/folder";
+import {Chat} from "@/src/entities/chat";
+import {Folder} from "@/src/entities/folder";
 
 export interface ChatComponentProps {
   currentChatId: string | null;
   currentFolderId: string | null;
   handleSearch: (query: string) => void;
-  filteredChats: ChatType[];
-  filteredFolders: FolderType[];
+  filteredChats: Chat[];
+  filteredFolders: Folder[];
   handleSelectChat: (chatId: string, folderId: string | null) => void;
   handleSelectFolder: (folderId: string | null) => void;
-  sendMessage: (message: string, files: ProcessedFile[]) => void;
 }

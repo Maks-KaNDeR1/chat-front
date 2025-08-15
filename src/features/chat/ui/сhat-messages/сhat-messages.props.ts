@@ -1,8 +1,7 @@
-import {DialogType, ProcessedFile} from "@/src/entities/dialog";
+import {Message} from "@/src/entities/message";
 
 export interface ChatMessagesProps {
   name: string;
-  dialog: DialogType[];
-  onSendMessage: (message: string, files: ProcessedFile[]) => void;
+  message: Message[];
   addNewChat: (name: string) => void;
 }

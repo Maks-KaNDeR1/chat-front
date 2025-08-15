@@ -1,7 +1,10 @@
+import {Chat} from "@/src/entities/chat";
+import {Folder} from "@/src/entities/folder";
+
 export const parsePath = (
   pathSegments: string[],
-  folders: Record<string, any>,
-  chats: Record<string, Record<string, any>>
+  folders: Record<string, Folder>,
+  chats: Record<string, Record<string, Chat>>
 ) => {
   if (pathSegments.length === 0) {
     return {folderId: null, chatId: null};

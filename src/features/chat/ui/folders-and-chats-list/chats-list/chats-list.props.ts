@@ -1,13 +1,13 @@
-import {ChatType} from "@/src/entities/chat";
-import {FolderType} from "@/src/entities/folder";
+import {Chat} from "@/src/entities/chat";
+import {Folder} from "@/src/entities/folder";
 
 export interface ChatListProps {
-  chats: ChatType[];
+  chats: Chat[];
   currentChatId: string | null;
   onSelectChat: (id: string) => void;
-  onRenameChat: (id: string, newName: string) => void;
+  onRenameChat: (id: string, newName: string, chat: Chat) => void;
   onDeleteChat: (id: string) => void;
-  folders: FolderType[];
+  folders: Folder[];
   onMoveChatToFolder: (chatId: string, folderId: string | null) => void;
-  onAddNewFolder: (folderName: string) => Promise<string>;
+  onAddNewFolder: (folderName: string) => Promise<string | null>;
 }

@@ -4,16 +4,16 @@ import {Button, Modal} from "react-bootstrap";
 import {ChatInput} from "./chat-input";
 import {FilesBlock} from "./files-block";
 import {ChatMessagesProps} from "./сhat-messages.props";
+import {useRouter} from "next/router";
+import {useChatPage} from "@/src/entities/chat";
+import {ChatDots} from "react-bootstrap-icons";
 
-export const ChatMessages = ({
-  name,
-  dialog,
-  onSendMessage,
-  addNewChat,
-}: ChatMessagesProps) => {
+export const ChatMessages = ({name, message, addNewChat}: ChatMessagesProps) => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [modalFile, setModalFile] = useState<string | null>(null);
   const [showAddChatModal, setShowAddChatModal] = useState(false);
+  const router = useRouter();
+  const {resetSelectedFoldersAndChats: reset, sendMessage: onSendMessage} = useChatPage();
 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -39,10 +39,10 @@ export const ChatMessages = ({
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTo({top: 0, behavior: "smooth"});
     }
-  }, [dialog]);
+  }, [message]);
 
   return (
-    <div className="d-flex flex-column h-100 border rounded p-3 position-relative">
+    <div className="d-flex flex-column h-100 border rounded-5 p-3 position-relative">
       <div className="d-flex justify-content-between align-items-center mb-3 ps-5 ps-lg-0">
         <h5
           style={{
@@ -57,12 +57,16 @@ export const ChatMessages = ({
         </h5>
 
         <Button
-          onClick={() => setShowAddChatModal(true)}
+          onClick={() => {
+            reset();
+            router.push("/");
+          }}
           style={{whiteSpace: "nowrap"}}
-          variant="secondary"
+          disabled={router.asPath === "/"}
+          variant="outline-secondary"
           size="sm"
         >
-          New chat +
+          Новый чат
         </Button>
       </div>
 
@@ -71,20 +75,35 @@ export const ChatMessages = ({
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-grow-1 mb-3"
+        className="flex-grow-1 mb-3 position-relative"
         style={{
           display: "flex",
           flexDirection: "column-reverse",
           overflowY: "auto",
+          overflowX: "hidden",
           scrollBehavior: "smooth",
         }}
       >
-        {dialog
+        {message.length === 0 && (
+          <div
+            className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center text-secondary"
+            style={{
+              gap: "10px",
+              opacity: 0.8,
+              pointerEvents: "none",
+              userSelect: "none",
+            }}
+          >
+            <ChatDots size={50} />
+            <div className="fs-5 fw-medium">Что хотите сегодня узнать?</div>
+          </div>
+        )}
+
+        {message
           .slice()
           .reverse()
           .map((msg, index) => {
-            const isUser = msg.sender === "User";
-
+            const isUser = msg.role === "user";
             return (
               <div
                 key={index}
@@ -93,23 +112,27 @@ export const ChatMessages = ({
                 } mb-2`}
               >
                 <div
-                  className={`p-2 rounded ${isUser ? "text-dark" : "bg-light text-dark"}`}
+                  className={`p-2 rounded-5 ${
+                    isUser ? "text-dark" : "bg-secondary text-white"
+                  }`}
                   style={{
                     maxWidth: "75%",
-                    textAlign: isUser ? "right" : "left",
                     wordBreak: "break-word",
                     whiteSpace: "pre-wrap",
-                    ...(isUser ? {backgroundColor: "#dbe9ff"} : {}),
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: isUser ? "flex-end" : "flex-start",
+                    ...(isUser ? {backgroundColor: "#ced4daeb"} : {}),
                   }}
                 >
-                  {msg.files.length > 0 && (
+                  {msg.imageUrls.length > 0 && (
                     <FilesBlock
                       filesFromUser={isUser}
-                      filesArr={msg.files}
+                      filesArr={msg.imageUrls}
                       onFileClick={openFileModal}
                     />
                   )}
-                  <div>{msg.message}</div>
+                  <div>{msg.text}</div>
                 </div>
               </div>
             );
@@ -138,8 +161,8 @@ export const ChatMessages = ({
         show={showAddChatModal}
         onClose={() => setShowAddChatModal(false)}
         onAdd={addNewChat}
-        title="New chat"
-        placeholder="Enter chat name"
+        title="Новый чат"
+        placeholder="Введите имя чата..."
       />
 
       <Modal

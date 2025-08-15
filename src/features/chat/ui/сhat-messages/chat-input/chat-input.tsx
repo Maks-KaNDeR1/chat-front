@@ -1,77 +1,45 @@
-import {ProcessedFile} from "@/src/entities/dialog";
 import React, {useEffect, useRef, useState} from "react";
-import {Form, Button, InputGroup, Badge} from "react-bootstrap";
+import {Form, Button, Badge} from "react-bootstrap";
 import {Paperclip, Send, X} from "react-bootstrap-icons";
 import {ChatInputProps} from "./chat-input.props";
 
 export const ChatInput = ({onSend}: ChatInputProps) => {
   const [message, setMessage] = useState("");
-  const [files, setFiles] = useState<ProcessedFile[]>([]);
+  const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Авто рост textarea
   useEffect(() => {
     const textarea = textareaRef.current;
     const MAX_HEIGHT = 200;
     if (textarea) {
       textarea.style.height = "auto";
-
       const newHeight = Math.min(textarea.scrollHeight, MAX_HEIGHT);
       textarea.style.height = `${newHeight}px`;
-
       textarea.style.overflowY = textarea.scrollHeight > MAX_HEIGHT ? "auto" : "hidden";
     }
   }, [message]);
 
-  const fileToBase64 = (file: File): Promise<ProcessedFile> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          resolve({
-            name: file.name,
-            type: file.type,
-            base64: reader.result.split(",")[1],
-          });
-        } else {
-          reject(new Error("Failed to read file"));
-        }
-      };
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
     if (!selectedFiles) return;
 
-    try {
-      const processedFiles = await Promise.all(
-        Array.from(selectedFiles).map(file => fileToBase64(file))
-      );
-      setFiles(prevFiles => [...prevFiles, ...processedFiles]);
-    } catch (error) {
-      console.error("Error reading files", error);
-    }
+    setFiles(prevFiles => [...prevFiles, ...Array.from(selectedFiles)]);
 
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSend = () => {
     const trimmed = message.trim();
     if (!trimmed && files.length === 0) return;
 
+    // Передаем текст и файлы в onSend, API обработает imageUrls
     onSend(trimmed, files);
+
     setMessage("");
     setFiles([]);
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -81,27 +49,22 @@ export const ChatInput = ({onSend}: ChatInputProps) => {
     }
   };
 
-  const handleAttachClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const removeFile = (index: number) => {
+  const handleAttachClick = () => fileInputRef.current?.click();
+  const removeFile = (index: number) =>
     setFiles(prevFiles => prevFiles.filter((_, i) => i !== index));
-  };
 
   return (
-    <Form>
+    <div style={{display: "flex", flexDirection: "column", gap: 8}}>
       {files.length > 0 && (
         <div
           style={{
-            marginBottom: 8,
-            padding: 8,
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 4,
+            padding: "4px 8px",
             border: "1px solid #ddd",
             borderRadius: 24,
-            backgroundColor: "#f8f9fa",
-            display: "flex",
-            gap: 8,
-            flexWrap: "wrap",
+            background: "#f8f9fa",
           }}
         >
           {files.map((file, i) => (
@@ -109,28 +72,46 @@ export const ChatInput = ({onSend}: ChatInputProps) => {
               key={i}
               bg="secondary"
               pill
-              style={{display: "flex", alignItems: "center", gap: 4}}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+                cursor: "pointer",
+              }}
             >
               {file.name}
               <X
                 style={{cursor: "pointer"}}
                 onClick={() => removeFile(i)}
-                title="Remove file"
+                title="Удалить файл"
               />
             </Badge>
           ))}
         </div>
       )}
 
-      <InputGroup>
-        <InputGroup.Text
-          color="info"
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          border: "1px solid #ddd",
+          borderRadius: 24,
+          padding: "4px 8px",
+          background: "#fff",
+        }}
+      >
+        <Button
+          variant="outline-secondary"
           onClick={handleAttachClick}
-          style={{cursor: "pointer"}}
-          className="rounded-start-pill"
+          color="dark"
+          className="rounded-circle d-flex align-items-center justify-content-center"
+          style={{width: 36, height: 36, padding: 0}}
+          title="Прикрепить файл"
         >
           <Paperclip />
-        </InputGroup.Text>
+        </Button>
+
         <Form.Control
           as="textarea"
           placeholder="Спросите что-нибудь..."
@@ -139,11 +120,26 @@ export const ChatInput = ({onSend}: ChatInputProps) => {
           onKeyDown={handleKeyDown}
           rows={1}
           ref={textareaRef}
-          style={{resize: "none"}}
+          style={{
+            resize: "none",
+            border: "none",
+            boxShadow: "none",
+            flex: 1,
+            padding: "8px 0",
+            minHeight: "38px",
+          }}
         />
-        <Button variant="secondary" className="rounded-end-pill" onClick={handleSend}>
+
+        <Button
+          variant="outline-secondary"
+          onClick={handleSend}
+          className="rounded-circle d-flex align-items-center justify-content-center"
+          style={{width: 36, height: 36, padding: 0}}
+          title="Отправить"
+        >
           <Send />
         </Button>
+
         <input
           type="file"
           multiple
@@ -151,7 +147,7 @@ export const ChatInput = ({onSend}: ChatInputProps) => {
           style={{display: "none"}}
           onChange={handleFileChange}
         />
-      </InputGroup>
-    </Form>
+      </div>
+    </div>
   );
 };

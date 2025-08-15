@@ -1,11 +1,11 @@
 import React, {useState} from "react";
-import {Button, ListGroup} from "react-bootstrap";
+import {ListGroup} from "react-bootstrap";
 import {FoldersList} from "./folders-list";
 import {ChatsList} from "./chats-list";
 import {useChatContext, useFolderContext} from "@/src/app/providers";
 import {FoldersAndChatsListProps} from "./folders-and-chats-list.props";
-import {AddItemModal} from "@/src/shared/ui";
-import {ChatType} from "@/src/entities/chat";
+import {Chat} from "@/src/entities/chat";
+import {useAuthStore} from "@/src/features/auth";
 
 export const FoldersAndChatsList = ({
   chatsList,
@@ -15,18 +15,50 @@ export const FoldersAndChatsList = ({
   handleSelectChat,
   handleSelectFolder,
 }: FoldersAndChatsListProps) => {
-  const {chats, updateChatName, deleteChat, updateChatById} = useChatContext();
-  const {addNewFolder, deleteFolder, updateFolderName} = useFolderContext();
+  const {chats, updateChat, deleteChat} = useChatContext();
+  const {folders, addNewFolder, deleteFolder, updateFolderName} = useFolderContext();
+
+  const [draggedChatId, setDraggedChatId] = useState<string | null>(null);
 
   const handleMoveChatToFolder = (chatId: string, folderId: string | null) => {
-    updateChatById(chatId, {folder: folderId});
+    let folderKey: string | null = null;
+
+    for (const key in chats) {
+      if (chats[key][chatId]) {
+        folderKey = key;
+        break;
+      }
+    }
+    if (!folderKey) return;
+
+    const chat = chats[folderKey][chatId];
+    if (!chat) return;
+
+    const updatedChat: Chat = {
+      ...chat,
+      folder: folderId ? folders[folderId] : null,
+    };
+
+    updateChat(chatId, updatedChat);
+  };
+  const addNewFolderHandler = async (folderName: string): Promise<string | null> => {
+    const ownerId = useAuthStore.getState().user?.id;
+
+    if (!ownerId) return null;
+
+    const folderId = await addNewFolder(folderName, ownerId);
+    return folderId;
   };
 
-  const defaultChats: ChatType[] = Object.values(chats["default"] || {});
+  const renameChatHandler = (chatId: string, newName: string, chat: Chat) => {
+    updateChat(chatId, {...chat, name: newName});
+  };
+
+  const defaultChats = Object.values(chats["default"] || {});
 
   return (
     <>
-      <ListGroup style={{overflowY: "auto", height: "calc(100% - 93px)"}}>
+      <ListGroup style={{overflowY: "auto", height: "calc(100% - 45px)"}}>
         <FoldersList
           folders={foldersList}
           currentChatId={currentChatId}
@@ -38,24 +70,50 @@ export const FoldersAndChatsList = ({
           onSelectFolder={handleSelectFolder}
           currentFolderId={currentFolderId}
           chats={chats}
-          onRenameChat={updateChatName}
+          onRenameChat={renameChatHandler}
           onDeleteChat={deleteChat}
           onMoveChatToFolder={handleMoveChatToFolder}
-          onAddNewFolder={addNewFolder}
+          onAddNewFolder={addNewFolderHandler}
+          draggedChatId={draggedChatId}
+          setDraggedChatId={setDraggedChatId}
         />
-
-        <ChatsList
-          sortable
-          dropFolderId={null}
-          chats={defaultChats}
-          currentChatId={currentChatId}
-          onSelectChat={(chatId: string) => handleSelectChat(chatId, null)}
-          onRenameChat={updateChatName}
-          onDeleteChat={deleteChat}
-          folders={foldersList}
-          onMoveChatToFolder={handleMoveChatToFolder}
-          onAddNewFolder={addNewFolder}
-        />
+        <div
+          onDragOver={e => {
+            e.preventDefault();
+            e.currentTarget.style.backgroundColor = "#f0f8ff";
+          }}
+          onDragLeave={e => {
+            e.currentTarget.style.backgroundColor = "";
+          }}
+          onDrop={e => {
+            e.preventDefault();
+            e.currentTarget.style.backgroundColor = "";
+            const chatId = e.dataTransfer.getData("chatId");
+            if (chatId) {
+              handleMoveChatToFolder(chatId, null);
+            }
+          }}
+          style={{
+            minHeight: "50px",
+            marginTop: "3px",
+            transition: "background-color 0.2s",
+          }}
+        >
+          <ChatsList
+            sortable
+            dropFolderId={null}
+            chats={defaultChats}
+            currentChatId={currentChatId}
+            onSelectChat={(chatId: string) => handleSelectChat(chatId, null)}
+            onRenameChat={renameChatHandler}
+            onDeleteChat={deleteChat}
+            folders={foldersList}
+            onMoveChatToFolder={handleMoveChatToFolder}
+            onAddNewFolder={addNewFolderHandler}
+            draggedChatId={draggedChatId}
+            setDraggedChatId={setDraggedChatId}
+          />
+        </div>
       </ListGroup>
     </>
   );

@@ -1,10 +1,14 @@
-import React from "react";
-import {ChatType} from "@/src/entities/chat";
+import React, {useState} from "react";
 import {FoldersListProps} from "./folders-list.props";
 import {EditableListItem} from "../editable-list-item";
 import {ChatsList} from "../chats-list";
 import {ListGroup} from "react-bootstrap";
 import {Folder, FolderX} from "react-bootstrap-icons";
+
+interface ExtendedFoldersListProps extends FoldersListProps {
+  draggedChatId: string | null;
+  setDraggedChatId: (id: string | null) => void;
+}
 
 export const FoldersList = ({
   folders,
@@ -19,12 +23,17 @@ export const FoldersList = ({
   onRenameChat,
   onAddNewFolder,
   onMoveChatToFolder,
-}: FoldersListProps) => {
+  draggedChatId,
+  setDraggedChatId,
+}: ExtendedFoldersListProps) => {
+  const [hoveredFolderId, setHoveredFolderId] = useState<string | null>(null);
+
   return (
     <ListGroup>
       {folders.map(folder => {
         const isActive = currentFolderId === folder.id;
-        const folderChats: ChatType[] = Object.values(chats[folder.id] || {});
+        const isHovered = hoveredFolderId === folder.id;
+        const folderChats = Object.values(chats[folder.id] || {});
         const hasChats = folderChats.length > 0;
 
         return (
@@ -33,9 +42,24 @@ export const FoldersList = ({
               data-folder-id={folder.id}
               onDragOver={e => {
                 e.preventDefault();
-                if (!isActive) {
-                  onSelectFolder(folder.id);
+                setHoveredFolderId(folder.id);
+              }}
+              onDragLeave={() => {
+                setHoveredFolderId(null);
+              }}
+              onDrop={e => {
+                e.preventDefault();
+                const chatId = e.dataTransfer.getData("chatId");
+                if (chatId) {
+                  onMoveChatToFolder(chatId, folder.id);
                 }
+                setHoveredFolderId(null);
+              }}
+              style={{
+                backgroundColor: isHovered ? "#435e7368" : "transparent",
+                transition: "background-color 0.2s",
+                padding: "4px",
+                borderRadius: "4px",
               }}
             >
               <EditableListItem
@@ -54,7 +78,6 @@ export const FoldersList = ({
                 onDelete={onDeleteFolder}
               />
             </div>
-
             {isActive && (
               <div style={{paddingLeft: 24}}>
                 <ChatsList
@@ -68,18 +91,18 @@ export const FoldersList = ({
                   folders={folders}
                   onMoveChatToFolder={onMoveChatToFolder}
                   onAddNewFolder={onAddNewFolder}
+                  draggedChatId={draggedChatId}
+                  setDraggedChatId={setDraggedChatId}
                 />
-
                 {!hasChats && (
                   <div
                     style={{
                       fontStyle: "italic",
                       color: "#888",
                       paddingBottom: 6,
-                      marginTop: 6,
                     }}
                   >
-                    (This folder is empty)
+                    (Эта папка пуста)
                   </div>
                 )}
               </div>

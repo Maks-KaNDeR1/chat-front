@@ -23,7 +23,7 @@ export const MovePopover = ({
   ) => {
     if (e.key === "Enter" && newFolderName.trim()) {
       const createdFolderId = await onAddNewFolder(newFolderName.trim());
-      onFolderSelect(chatId, createdFolderId);
+      onFolderSelect(chatId, createdFolderId || null);
       setSearchTerm("");
       setNewFolderName("");
       onHide();
@@ -38,14 +38,15 @@ export const MovePopover = ({
       containerPadding={8}
       rootClose
       onHide={onHide}
+      flip
     >
       <Popover id={`popover-move-${chatId}`} style={{minWidth: 220}}>
         <Popover.Header as="h6" className="fw-bold">
-          Move to folder
+          Переместить в папку
         </Popover.Header>
         <Popover.Body>
           <FormControl
-            placeholder="Search folders..."
+            placeholder="Поиск папок..."
             size="sm"
             autoFocus
             value={searchTerm}
@@ -57,7 +58,7 @@ export const MovePopover = ({
           <ListGroup variant="flush" style={{maxHeight: 180, overflowY: "auto"}}>
             <ListGroup.Item action onClick={() => onFolderSelect(chatId, null)}>
               <FolderX className="me-2" />
-              no folder
+              Без папки
             </ListGroup.Item>
 
             {folders.length > 0 ? (
@@ -73,13 +74,13 @@ export const MovePopover = ({
               ))
             ) : (
               <ListGroup.Item disabled className="text-muted">
-                Folders not found
+                Папок нет
               </ListGroup.Item>
             )}
           </ListGroup>
 
           <FormControl
-            placeholder="Create new folder"
+            placeholder="В новую папку"
             size="sm"
             value={newFolderName}
             onChange={e => setNewFolderName(e.target.value)}

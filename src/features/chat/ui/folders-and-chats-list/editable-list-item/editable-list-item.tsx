@@ -1,12 +1,14 @@
 import React, {useState, useRef, useEffect} from "react";
 import {ListGroup, FormControl, Button, Overlay, Popover} from "react-bootstrap";
-import {Trash, Pencil, Folder, FolderCheck} from "react-bootstrap-icons";
+import {Trash, Pencil} from "react-bootstrap-icons";
 import {EditableListItemProps} from "./editable-list-item.props";
 import styles from "./editable-list-item.module.css";
 
 interface ExtendedEditableListItemProps extends EditableListItemProps {
   moveIcon?: React.ReactNode;
   onMoveClick?: (event: React.MouseEvent<HTMLElement>) => void;
+  draggable?: boolean;
+  onDragStart?: (e: React.DragEvent) => void;
 }
 
 export const EditableListItem = ({
@@ -19,6 +21,8 @@ export const EditableListItem = ({
   onDelete,
   moveIcon,
   onMoveClick,
+  draggable = false,
+  onDragStart,
 }: ExtendedEditableListItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(name);
@@ -62,11 +66,13 @@ export const EditableListItem = ({
       <ListGroup.Item
         as="li"
         action
-        variant="dark"
+        variant="secondary"
         onClick={() => onSelect(id)}
-        className={`mb-1 d-flex border-0 justify-content-between align-items-center rounded-5 ${styles.listItem} ${
+        className={`mb-0 d-flex border-0 justify-content-between align-items-center rounded-5 ${styles.listItem} ${
           isActive ? styles.active : ""
         }`}
+        draggable={draggable}
+        onDragStart={onDragStart}
       >
         {isEditing ? (
           <FormControl
@@ -77,7 +83,7 @@ export const EditableListItem = ({
             onChange={e => setEditedName(e.target.value)}
             onKeyDown={handleRename}
             onClick={e => e.stopPropagation()}
-            className={`me-2 ${styles.input}`}
+            className={`${styles.input} rounded-5`}
           />
         ) : (
           <>
@@ -85,7 +91,6 @@ export const EditableListItem = ({
               {icon}
               {name}
             </span>
-
             <div className="d-flex gap-2">
               {moveIcon && (
                 <Button
@@ -100,7 +105,6 @@ export const EditableListItem = ({
                   {moveIcon}
                 </Button>
               )}
-
               <Button
                 variant="link"
                 size="sm"
@@ -137,7 +141,7 @@ export const EditableListItem = ({
           <Popover.Body className="p-2 small text-secondary">
             <div className="d-flex flex-column">
               <span className="mb-2">
-                Delete <strong>{name}</strong>?
+                Удалить <strong>{name}</strong>?
               </span>
               <div className="d-flex gap-2">
                 <Button
@@ -145,10 +149,10 @@ export const EditableListItem = ({
                   size="sm"
                   onClick={() => setShowConfirm(false)}
                 >
-                  Cancel
+                  Отмена
                 </Button>
-                <Button variant="danger" size="sm" onClick={handleDeleteConfirm}>
-                  Delete
+                <Button variant="outline-danger" size="sm" onClick={handleDeleteConfirm}>
+                  Удалить
                 </Button>
               </div>
             </div>

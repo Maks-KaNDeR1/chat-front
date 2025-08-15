@@ -1,144 +1,155 @@
-import React, {createContext, useContext, useState, useEffect} from "react";
-import {
-  addNewChat,
-  ChatRequestType,
-  ChatType,
-  deleteChat,
-  selectChat,
-  updateChatName,
-} from "@/src/entities/chat";
-import {useFolderContext} from "./folder-provider";
+import React, {createContext, useContext, useEffect, useState} from "react";
 import {useRouter} from "next/router";
-import {useDialogContext} from "./dialog-provider";
-
-const LOCAL_STORAGE_KEY = "chats";
+import {Chat} from "@/src/entities/chat/model";
+import {
+  createChat,
+  getChats,
+  updateChat,
+  deleteChat as deleteChatApi,
+} from "@/src/entities/chat/api";
+import {useAuthStatus} from "@/src/features/auth";
 
 interface ChatsContextType {
-  chats: Record<string, Record<string, ChatType>>;
+  chats: Record<string, Record<string, Chat>>;
   currentChatId: string | null;
   selectChat: (id: string | null) => void;
-  addNewChat: (folderKey: string, chat: ChatRequestType) => void;
-  updateChatName: (id: string, newName: string) => void;
-  deleteChat: (id: string) => void;
-  updateChatById: (chatId: string, updatedFields: Partial<ChatType>) => void;
+  addNewChat: (name: string, folderId: string, ownerId: string) => Promise<string>;
+  updateChat: (chatId: string, chat: Chat) => Promise<void>;
+  deleteChat: (chatId: string) => Promise<void>;
+  loading: boolean;
 }
 
 const Context = createContext<ChatsContextType>({
   chats: {},
   currentChatId: null,
   selectChat: () => {},
-  addNewChat: () => {},
-  updateChatName: () => {},
-  deleteChat: () => {},
-  updateChatById: () => {},
+  addNewChat: async () => "",
+  updateChat: async () => {},
+  deleteChat: async () => {},
+  loading: true,
 });
-
-function saveFolderChats(folderKey: string, chatsInFolder: Record<string, ChatType>) {
-  localStorage.setItem(
-    `${LOCAL_STORAGE_KEY}_${folderKey}`,
-    JSON.stringify(chatsInFolder)
-  );
-}
 
 export function useChatContext() {
   return useContext(Context);
 }
 
 export function ChatProvider({children}: {children: React.ReactNode}) {
-  const [chats, setChats] = useState<Record<string, Record<string, ChatType>>>({});
+  const [chats, setChats] = useState<Record<string, Record<string, Chat>>>({});
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
-  const {selectFolder} = useFolderContext();
-  const {deleteDialogsByChatId} = useDialogContext();
+  const {isAuthorized} = useAuthStatus();
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchChats = async () => {
+      setLoading(true);
+      try {
+        const res = await getChats();
+        if (res.status) {
+          const grouped: Record<string, Record<string, Chat>> = {};
+          res.result.forEach(chat => {
+            const folderKey = chat.folder?.id || "default";
+            if (!grouped[folderKey]) grouped[folderKey] = {};
+            grouped[folderKey][chat.id] = chat;
+          });
+          setChats(grouped);
+        }
+      } catch (e) {
+        console.error("Failed to load chats:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // if (isAuthorized) {
+      fetchChats();
+    // }
+  }, [isAuthorized]);
+
+  const selectChatHandler = (id: string | null) => {
+    setCurrentChatId(id);
+  };
+
+  const addNewChatHandler = async (name: string, folderId: string, ownerId: string) => {
     try {
-      const allChats: Record<string, Record<string, ChatType>> = {};
-      for (const key in localStorage) {
-        if (key.startsWith(`${LOCAL_STORAGE_KEY}_`)) {
-          const folderKey = key.replace(`${LOCAL_STORAGE_KEY}_`, "");
-          const stored = localStorage.getItem(key);
-          if (stored) allChats[folderKey] = JSON.parse(stored);
-        }
+      const res = await createChat(ownerId, name, folderId);
+      if (res.status) {
+        const folderKey = res.result.folder?.id || "default";
+
+        setChats(prev => ({
+          ...prev,
+          [folderKey]: {
+            ...(prev[folderKey] || {}),
+            [res.result.id]: res.result,
+          },
+        }));
+
+        setCurrentChatId(res.result.id);
+        return res.result.id;
       }
-      setChats(allChats);
     } catch (e) {
-      console.error("Failed to load chats:", e);
+      console.error("Failed to create chat:", e);
     }
-  }, []);
+    throw new Error("Failed to create chat");
+  };
 
-  const handleDeleteChat = (id: string) => {
-    deleteChat(id, chats, setChats);
-    deleteDialogsByChatId(id);
+  const updateChatHandler = async (chatId: string, updatedChat: Chat) => {
+    let folderKey: string | null = null;
 
-    if (currentChatId === id) {
-      setCurrentChatId(null);
-      router.push(`/`);
+    for (const key in chats) {
+      if (chats[key][chatId]) {
+        folderKey = key;
+        break;
+      }
+    }
+    if (!folderKey) return;
+
+    try {
+      const res = await updateChat(chatId, updatedChat);
+      if (res?.result) {
+        setChats(prev => ({
+          ...prev,
+          [folderKey!]: {
+            ...prev[folderKey!],
+            [chatId]: updatedChat,
+          },
+        }));
+      }
+    } catch (e) {
+      console.error("Failed to update chat:", e);
     }
   };
 
-  // перемещаем чат между папками
-  const updateChatById = (chatId: string, updatedFields: Partial<ChatType>) => {
-    setChats(prev => {
-      const newChats = {...prev};
+  const deleteChatHandler = async (chatId: string) => {
+    let folderKey: string | null = null;
 
-      const currentFolderKey = Object.keys(newChats).find(
-        folderKey => chatId in (newChats[folderKey] || {})
-      );
-      if (!currentFolderKey) return prev;
+    for (const key in chats) {
+      if (chats[key][chatId]) {
+        folderKey = key;
+        break;
+      }
+    }
+    if (!folderKey) return;
 
-      const oldChat = newChats[currentFolderKey][chatId];
-      const updatedChat = {...oldChat, ...updatedFields};
+    try {
+      const res = await deleteChatApi(chatId);
+      if (res?.result) {
+        setChats(prev => {
+          const updatedFolder = {...prev[folderKey!]};
+          delete updatedFolder[chatId];
+          return {
+            ...prev,
+            [folderKey!]: updatedFolder,
+          };
+        });
 
-      let newFolderKey = currentFolderKey;
-
-      if (
-        updatedFields.folder !== undefined &&
-        updatedFields.folder !== currentFolderKey
-      ) {
-        newFolderKey = updatedFields.folder || "default";
-
-        delete newChats[currentFolderKey][chatId];
-        saveFolderChats(currentFolderKey, newChats[currentFolderKey]);
-
-        if (chatId === currentChatId) {
-          selectFolder(null);
-        }
-
-        if (!newChats[newFolderKey]) newChats[newFolderKey] = {};
-        newChats[newFolderKey][chatId] = {...updatedChat, folder: newFolderKey};
-        saveFolderChats(newFolderKey, newChats[newFolderKey]);
-      } else {
-        newChats[currentFolderKey][chatId] = updatedChat;
-        saveFolderChats(currentFolderKey, newChats[currentFolderKey]);
-
-        if (chatId === currentChatId) {
-          selectFolder(currentFolderKey);
+        if (currentChatId === chatId) {
+          setCurrentChatId(null);
+          router.push("/");
         }
       }
-
-      // если этот чат текущий, меняем роутер
-      if (chatId === currentChatId) {
-        if (newFolderKey && newFolderKey !== "default") {
-          router.push(`/${newFolderKey}/${chatId}`);
-        } else {
-          router.push(`/${chatId}`);
-        }
-      }
-
-      return newChats;
-    });
-  };
-
-  const addChat = (folderKey: string, chat: ChatRequestType) => {
-    const newId = addNewChat(folderKey, chat, chats, setChats, setCurrentChatId);
-
-    if (folderKey && folderKey !== "default") {
-      selectFolder(folderKey);
-      router.push(`/${folderKey}/${newId}`);
-    } else {
-      selectFolder(null);
-      router.push(`/${newId}`);
+    } catch (e) {
+      console.error("Failed to delete chat:", e);
     }
   };
 
@@ -147,11 +158,11 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
       value={{
         chats,
         currentChatId,
-        selectChat: id => selectChat(id, setCurrentChatId),
-        addNewChat: addChat,
-        updateChatName: (id, newName) => updateChatName(id, newName, chats, setChats),
-        deleteChat: handleDeleteChat,
-        updateChatById,
+        selectChat: selectChatHandler,
+        addNewChat: addNewChatHandler,
+        updateChat: updateChatHandler,
+        deleteChat: deleteChatHandler,
+        loading,
       }}
     >
       {children}

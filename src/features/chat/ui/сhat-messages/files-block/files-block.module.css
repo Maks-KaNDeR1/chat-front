@@ -1,42 +1,19 @@
-.buttonsContainerRight {
+.buttonsContainer {
   position: absolute;
   top: 50%;
+  display: flex;
+  flex-direction: row-reverse;
+  z-index: 20;
+}
+
+.buttonsContainerRight {
   right: 0;
   transform: translate(calc(100% + 14px), -50%);
-  display: flex;
-  flex-direction: column;
-  /* gap: 0.1rem; */
-  z-index: 20;
 }
 
 .buttonsContainerLeft {
-  position: absolute;
-  top: 50%;
   left: 0;
   transform: translate(calc(-100% - 14px), -50%);
-  display: flex;
-  flex-direction: column;
-  /* gap: 0.1rem; */
-  z-index: 20;
-}
-
-.btnSmallCommon {
-  white-space: nowrap;
-  z-index: 10;
-  font-size: 11px;
-  padding: 0.15rem 0.5rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3;
-}
-
-.btnSmallCommon svg {
-  margin-left: 3;
-}
-
-.btnSmallCommon:last-child svg {
-  margin-top: 1px;
 }
 
 .scrollButton {
@@ -47,20 +24,18 @@
   border: none;
   z-index: 10;
   user-select: none;
-  /* font-size: 14px; */
-  padding: 0.18rem;
+  padding: 0.18rem 0.28rem;
+  background-color: #fff;
   color: #000;
+  border-radius: 3rem;
 }
 
 .scrollButtonLeft {
-  left: 0;
-
-  border-radius: 0 0.25rem 0.25rem 0;
+  left: -4;
 }
 
 .scrollButtonRight {
-  right: 0;
-  border-radius: 0.25rem 0 0 0.25rem;
+  right: -4;
 }
 
 .fileTypeShortBox {

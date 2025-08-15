@@ -1,19 +1,21 @@
 import {useMemo} from "react";
-import {ChatType} from "../model";
-import {FolderType} from "../../folder";
+import {Folder} from "../../folder";
+import {Chat} from "../model";
 
 export const useSortedAndFiltered = (
-  folders: Record<string, FolderType>,
-  chats: Record<string, Record<string, ChatType>>,
+  folders: Record<string, Folder>,
+  chats: Record<string, Record<string, Chat>>,
   searchQuery: string
 ) => {
-  const sortedFolders = useMemo<FolderType[]>(() => {
-    return Object.values(folders).sort((a, b) => Number(b.date) - Number(a.date));
+  const sortedFolders = useMemo<Folder[]>(() => {
+    return Object.values(folders).sort(
+      (a, b) => Number(b.createdAt) - Number(a.createdAt)
+    );
   }, [folders]);
 
-  const sortedChats = useMemo<ChatType[]>(() => {
+  const sortedChats = useMemo<Chat[]>(() => {
     return Object.values(chats["default"] || {}).sort(
-      (a, b) => Number(b.date) - Number(a.date)
+      (a, b) => Number(b.createdAt) - Number(a.createdAt)
     );
   }, [chats]);
 

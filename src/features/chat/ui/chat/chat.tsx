@@ -1,7 +1,6 @@
 import React, {useState} from "react";
 import Head from "next/head";
-import {useChatContext, useDialogContext, useFolderContext} from "@/src/app/providers";
-import {ChatType} from "@/src/entities/chat";
+import {useChatContext, useFolderContext, useMessageContext} from "@/src/app/providers";
 import {Col, Row, Offcanvas, Button} from "react-bootstrap";
 import {SearchInput} from "../header/search-input";
 import {ChatMessages} from "../сhat-messages";
@@ -9,13 +8,15 @@ import {ChatComponentProps} from "./chat.props";
 import {FoldersAndChatsList} from "../folders-and-chats-list";
 import styles from "./chat.module.css";
 import {HeaderChat} from "../header";
+import {Chat as ChatType} from "@/src/entities/chat";
+import {useAuthStore} from "@/src/features/auth";
 
 const getCurrentChatName = (
   chatId: string | null,
   chats: Record<string, Record<string, ChatType>>,
   currentFolderId: string | null
 ): string => {
-  if (!chatId) return "New Chat";
+  if (!chatId) return "Новый чат";
 
   if (currentFolderId && chats[currentFolderId]?.[chatId]) {
     return chats[currentFolderId][chatId].name;
@@ -29,7 +30,7 @@ const getCurrentChatName = (
     if (chats[fId]?.[chatId]) return chats[fId][chatId].name;
   }
 
-  return "New Chat";
+  return "Новый чат";
 };
 
 export const ChatComponent = ({
@@ -40,14 +41,14 @@ export const ChatComponent = ({
   handleSearch,
   handleSelectChat,
   handleSelectFolder,
-  sendMessage,
 }: ChatComponentProps) => {
-  const {getDialogByChatId} = useDialogContext();
+  const {getMessageChatId} = useMessageContext();
   const {chats, addNewChat} = useChatContext();
   const {addNewFolder} = useFolderContext();
   const [showSidebar, setShowSidebar] = useState(false);
+  const userId = useAuthStore.getState().user?.id;
 
-  const currentDialog = currentChatId ? getDialogByChatId(currentChatId) : [];
+  const currentDialog = currentChatId ? getMessageChatId(currentChatId) : [];
   const name = getCurrentChatName(currentChatId, chats, currentFolderId);
 
   return (
@@ -62,9 +63,16 @@ export const ChatComponent = ({
         <Col
           lg={4}
           className="d-none d-lg-block"
-          style={{height: "calc(100vh - 80px)", borderRadius: 40}}
+          style={{height: "calc(100vh - 75px)", borderRadius: 40}}
         >
-          <HeaderChat handleSearch={handleSearch} addNewFolder={addNewFolder} />
+          <HeaderChat
+            handleSearch={handleSearch}
+            addNewFolder={(name: string) => {
+              if (userId) {
+                addNewFolder(name, userId);
+              }
+            }}
+          />
 
           <FoldersAndChatsList
             currentChatId={currentChatId}
@@ -76,7 +84,7 @@ export const ChatComponent = ({
           />
         </Col>
 
-        <Col xs={12} lg={8} style={{height: "calc(100vh - 80px)", position: "relative"}}>
+        <Col xs={12} lg={8} style={{height: "calc(100vh - 70px)", position: "relative"}}>
           <Button
             variant="light"
             onClick={() => setShowSidebar(true)}
@@ -94,12 +102,12 @@ export const ChatComponent = ({
 
           <ChatMessages
             name={name}
-            dialog={currentDialog}
+            message={currentDialog}
             addNewChat={(name: string) => {
-              const newChat = {name, folder: currentFolderId || null};
-              addNewChat(currentFolderId || "default", newChat);
+              if (userId) {
+                addNewChat(name, currentFolderId || "default", userId);
+              }
             }}
-            onSendMessage={sendMessage}
           />
         </Col>
       </Row>
@@ -111,10 +119,18 @@ export const ChatComponent = ({
         className="d-lg-none"
       >
         <Offcanvas.Header closeButton>
-          <Offcanvas.Title>Chats</Offcanvas.Title>
+          <Offcanvas.Title>Папки и чаты</Offcanvas.Title>
         </Offcanvas.Header>
-        <Offcanvas.Body>
-          <SearchInput onSearch={handleSearch} />
+        <Offcanvas.Body className="pt-1 overflow-hidden">
+          <HeaderChat
+            handleSearch={handleSearch}
+            addNewFolder={(name: string) => {
+              if (userId) {
+                addNewFolder(name, userId);
+              }
+            }}
+          />
+
           <FoldersAndChatsList
             currentChatId={currentChatId}
             currentFolderId={currentFolderId}

@@ -1,5 +1,8 @@
-export interface FolderType {
+import {User} from "../../user";
+
+export type Folder = {
   id: string;
+  owner: User;
   name: string;
-  date: string;
-}
+  createdAt: string;
+};

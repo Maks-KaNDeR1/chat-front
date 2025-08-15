@@ -1,7 +1,7 @@
-import {ProcessedFile} from "@/src/entities/dialog";
-
 export interface FilesBlockProps {
-  filesArr: ProcessedFile[];
+  // filesArr: string[];
+  filesArr: string[];
+  // filesArr: ProcessedFile[];
   filesFromUser: boolean;
   onFileClick: (fileUrl: string) => void;
 }

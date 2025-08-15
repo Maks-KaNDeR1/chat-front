@@ -1,25 +1,32 @@
 import React, {createContext, useContext, useEffect, useState} from "react";
 import {useRouter} from "next/router";
-import {FolderType} from "@/src/entities/folder";
-
-const LOCAL_STORAGE_KEY = "folders";
+import {Folder} from "@/src/entities/folder";
+import {
+  getFolders,
+  createFolder,
+  updateFolder,
+  deleteFolder,
+} from "@/src/entities/folder/api";
+import {useAuthStatus} from "@/src/features/auth";
 
 interface FoldersContextType {
-  folders: Record<string, FolderType>;
+  folders: Record<string, Folder>;
   currentFolderId: string | null;
-  addNewFolder: (name: string) => Promise<string>;
-  updateFolderName: (id: string, newName: string) => void;
-  deleteFolder: (id: string) => void;
+  addNewFolder: (name: string, ownerId: string) => Promise<string>;
+  updateFolderName: (id: string, newName: string) => Promise<void>;
+  deleteFolder: (id: string) => Promise<void>;
   selectFolder: (id: string | null) => void;
+  loading: boolean;
 }
 
 const defaultContextValue: FoldersContextType = {
   folders: {},
   currentFolderId: null,
   addNewFolder: () => Promise.resolve(""),
-  updateFolderName: () => {},
-  deleteFolder: () => {},
+  updateFolderName: async () => {},
+  deleteFolder: async () => {},
   selectFolder: () => {},
+  loading: true,
 };
 
 const Context = createContext<FoldersContextType>(defaultContextValue);
@@ -29,65 +36,77 @@ export function useFolderContext() {
 }
 
 export function FoldersProvider({children}: {children: React.ReactNode}) {
-  const [folders, setFolders] = useState<Record<string, FolderType>>({});
+  const [folders, setFolders] = useState<Record<string, Folder>>({});
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const router = useRouter();
+  const {isAuthorized} = useAuthStatus();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchFolders = async () => {
+      setLoading(true);
+
+      try {
+        const res = await getFolders();
+
+        if (res.status) {
+          const foldersMap: Record<string, Folder> = {};
+          res.result.forEach(f => {
+            foldersMap[f.id] = f;
+          });
+          setFolders(foldersMap);
+        }
+      } catch (e) {
+        console.error("Failed to load folders:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // if (isAuthorized) {
+      fetchFolders();
+    // }
+  }, [isAuthorized]);
+
+  const addNewFolder = async (name: string, ownerId: string): Promise<string> => {
+    const res = await createFolder(ownerId, name);
+    if (res.status) {
+      setFolders(prev => ({...prev, [res.result.id]: res.result}));
+      return res.result.id;
+    }
+    throw new Error("Failed to create folder");
+  };
+
+  const updateFolderName = async (id: string, newName: string) => {
+    const folder = folders[id];
+    if (!folder) return;
+
+    const updatedFolder = {...folder, name: newName};
+    const res = await updateFolder(id, updatedFolder);
+
+    if (res.status) {
+      setFolders(prev => ({...prev, [id]: res.result}));
+    }
+  };
+
+  const deleteFolderHandler = async (id: string) => {
     try {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        setFolders(JSON.parse(stored));
+      const res = await deleteFolder(id);
+      if (res?.result) {
+        setFolders(prev => {
+          const updated = {...prev};
+          delete updated[id];
+          return updated;
+        });
+
+        if (currentFolderId === id) {
+          setCurrentFolderId(null);
+          router.push("/");
+        }
       }
     } catch (e) {
-      console.error("Failed to load folders:", e);
+      console.error("Failed to delete folder:", e);
     }
-  }, []);
-
-  const saveToLocalStorage = (foldersToSave: Record<string, FolderType>) => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(foldersToSave));
-  };
-
-  const addNewFolder = async (name: string): Promise<string> => {
-    const newId = `new_folder_${Date.now()}`;
-    const newFolder: FolderType = {id: newId, name, date: Date.now().toString()};
-
-    setFolders(prev => {
-      const updated = {...prev, [newId]: newFolder};
-      saveToLocalStorage(updated);
-      return updated;
-    });
-
-    return newId;
-  };
-
-  const updateFolderName = (id: string, newName: string) => {
-    setFolders(prev => {
-      if (!prev[id]) return prev;
-      const updated = {
-        ...prev,
-        [id]: {...prev[id], name: newName, date: Date.now().toString()},
-      };
-      saveToLocalStorage(updated);
-      return updated;
-    });
-  };
-
-  const deleteFolder = (id: string) => {
-    setFolders(prev => {
-      const updated = {...prev};
-      delete updated[id];
-      saveToLocalStorage(updated);
-      return updated;
-    });
-
-    if (currentFolderId === id) {
-      setCurrentFolderId(null);
-
-      router.push("/");
-    }
-
-    setCurrentFolderId(prevId => (prevId === id ? null : prevId));
   };
 
   const selectFolder = (id: string | null) => {
@@ -101,8 +120,9 @@ export function FoldersProvider({children}: {children: React.ReactNode}) {
         currentFolderId,
         addNewFolder,
         updateFolderName,
-        deleteFolder,
+        deleteFolder: deleteFolderHandler,
         selectFolder,
+        loading,
       }}
     >
       {children}

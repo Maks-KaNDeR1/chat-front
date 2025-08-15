@@ -5,13 +5,12 @@ import {AddItemModalProps} from "./add-item-modal.props";
 export const AddItemModal = ({
   show,
   title,
-  placeholder = "Enter name",
+  placeholder = "Введите название",
   initialValue = "",
   onClose,
   onAdd,
 }: AddItemModalProps) => {
   const MAX_LENGTH = 20;
-
   const [inputValue, setInputValue] = useState<string>(initialValue);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -32,18 +31,18 @@ export const AddItemModal = ({
       setInputValue(val);
       setError(null);
     } else {
-      setError(`Maximum length is ${MAX_LENGTH} characters`);
+      setError(`Максимальная длина — ${MAX_LENGTH} символов`);
     }
   };
 
   const handleAdd = () => {
     const trimmed = inputValue.trim();
     if (!trimmed) {
-      setError("Please enter a value");
+      setError("Пожалуйста, введите значение");
       return;
     }
     if (trimmed.length > MAX_LENGTH) {
-      setError(`Maximum length is ${MAX_LENGTH} characters`);
+      setError(`Максимальная длина — ${MAX_LENGTH} символов`);
       return;
     }
     onAdd(trimmed);
@@ -77,10 +76,10 @@ export const AddItemModal = ({
       </Modal.Body>
       <Modal.Footer>
         <Button variant="secondary" onClick={onClose}>
-          Cancel
+          Отмена
         </Button>
-        <Button variant="primary" onClick={handleAdd} disabled={inputValue.trim() === ""}>
-          Add
+        <Button variant="outline-secondary" onClick={handleAdd}>
+          Создать
         </Button>
       </Modal.Footer>
     </Modal>
