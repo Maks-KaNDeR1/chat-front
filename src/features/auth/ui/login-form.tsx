@@ -4,7 +4,7 @@ import {useSnackbar} from "notistack";
 import {Form, Button, Container, Row, Col} from "react-bootstrap";
 import {login} from "../api";
 import {AuthPayload, useAuthStatus, useAuthStore} from "../model";
-import { getUserByToken } from "@/src/entities/user/api";
+import {getUserByToken} from "@/src/entities/user/api";
 
 export const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -30,8 +30,7 @@ export const LoginForm = () => {
       enqueueSnackbar("Успешный вход!", {variant: "success"});
       localStorage.setItem("token", data.result);
 
-      getUserByToken(data.result)
-      .then(me => {
+      getUserByToken(data.result).then(me => {
         if (!me) return;
 
         setUser(me.data, data.result);

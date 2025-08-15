@@ -62,7 +62,7 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
     };
 
     // if (isAuthorized) {
-      fetchChats();
+    fetchChats();
     // }
   }, [isAuthorized]);
 

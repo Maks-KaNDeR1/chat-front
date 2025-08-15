@@ -64,7 +64,7 @@ export function FoldersProvider({children}: {children: React.ReactNode}) {
     };
 
     // if (isAuthorized) {
-      fetchFolders();
+    fetchFolders();
     // }
   }, [isAuthorized]);
 

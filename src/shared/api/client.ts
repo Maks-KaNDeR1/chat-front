@@ -7,7 +7,8 @@ export const apiClient = async (
   data: object = {},
   token?: string
 ): Promise<any> => {
-  const bearer = token || (typeof window !== "undefined" ? localStorage.getItem("token") : "");
+  const bearer =
+    token || (typeof window !== "undefined" ? localStorage.getItem("token") : "");
 
   return axios
     .request({
@@ -29,7 +30,6 @@ export const apiClient = async (
     })
     .catch(({response}) => {
       if (response?.status === 401) {
-        // например, разлогиниваем пользователя
       }
       throw Error(JSON.stringify(response?.data || {}));
     });
