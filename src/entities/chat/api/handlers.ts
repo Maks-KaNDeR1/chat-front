@@ -14,13 +14,13 @@ export const createChat = (
   return apiClient("/api/chats/new", "post", {ownerId, name, folderId});
 };
 
-export const deleteChat = (chatId: string): Promise<{result: boolean} | undefined> => {
+export const deleteChat = (chatId: string): Promise<{success: boolean} | undefined> => {
   return apiClient(`/api/chats/${chatId}`, "delete");
 };
 
 export const updateChat = (
   chatId: string,
   updatedChat: Chat
-): Promise<{result: boolean} | undefined> => {
-  return apiClient(`/api/chats/${chatId}`, "patch", {chat: updatedChat});
+): Promise<{success: boolean} | undefined> => {
+  return apiClient(`/api/chats/${chatId}`, "put", {chat: updatedChat});
 };

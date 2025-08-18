@@ -64,9 +64,9 @@ export const MovePopover = ({
             {folders.length > 0 ? (
               folders.map(folder => (
                 <ListGroup.Item
-                  key={folder.id}
+                  key={folder._id}
                   action
-                  onClick={() => onFolderSelect(chatId, folder.id)}
+                  onClick={() => onFolderSelect(chatId, folder._id)}
                 >
                   <Folder className="me-2" />
                   {folder.name}

@@ -1,36 +1,46 @@
-import React, {useState} from "react";
+import React, {useState, useRef} from "react";
 import {useRouter} from "next/router";
 import {useSnackbar} from "notistack";
-import {Form, Button, Container, Row, Col} from "react-bootstrap";
-import {AuthPayload, useAuthStatus} from "../model";
+import {Form, Button, Container, Row, Col, Spinner} from "react-bootstrap";
 import {register} from "../api";
+import {getUserByToken} from "@/src/entities/user/api";
+import {useAuthStore} from "../model";
 
 export const RegisterForm = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [validated, setValidated] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const {enqueueSnackbar} = useSnackbar();
+  const setUser = useAuthStore(state => state.setUser);
+
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setValidated(true);
 
     if (!username || !password) {
       enqueueSnackbar("Пожалуйста, заполните все поля.", {variant: "error"});
+      buttonRef.current?.scrollIntoView({behavior: "smooth", block: "center"});
       return;
     }
 
-    const data = await register({username, password});
+    setLoading(true);
+    try {
+      const data = await register({username, password});
 
-    if (data.status) {
-      enqueueSnackbar("Регистрация успешна!", {variant: "success"});
-      localStorage.setItem("token", data.result);
+      if (data.success) {
+        enqueueSnackbar("Регистрация успешна!", {variant: "success"});
+        localStorage.setItem("token", data.result);
+        router.push("/");
 
-      useAuthStatus.getState().setAuthorized(true);
-      router.push("/");
-    } else {
-      enqueueSnackbar(data.error, {variant: "error"});
+        const me = await getUserByToken(data.result);
+        if (me) setUser(me.result);
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -39,7 +49,7 @@ export const RegisterForm = () => {
       <Row className="justify-content-md-center mt-5">
         <Col xs={12} md={5} lg={4}>
           <h2 className="text-center mb-4">Регистрация</h2>
-          <Form noValidate validated={validated} onSubmit={handleSubmit}>
+          <Form noValidate onSubmit={handleSubmit}>
             <Form.Group controlId="formUsername" className="mb-3">
               <Form.Label>Имя пользователя</Form.Label>
               <Form.Control
@@ -49,7 +59,7 @@ export const RegisterForm = () => {
                 className="rounded-5"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                isInvalid={validated && !username}
+                isInvalid={!username}
               />
               <Form.Control.Feedback type="invalid">
                 Пожалуйста, введите имя пользователя.
@@ -65,15 +75,35 @@ export const RegisterForm = () => {
                 className="rounded-5"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                isInvalid={validated && !password}
+                isInvalid={!password}
               />
               <Form.Control.Feedback type="invalid">
                 Пожалуйста, введите пароль.
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Button variant="outline-secondary" type="submit" className="w-100">
-              Зарегистрироваться
+            <Button
+              ref={buttonRef}
+              variant="outline-secondary"
+              type="submit"
+              className="w-100"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Spinner
+                    as="span"
+                    animation="border"
+                    size="sm"
+                    role="status"
+                    aria-hidden="true"
+                    className="me-2"
+                  />
+                  Регистрация...
+                </>
+              ) : (
+                "Зарегистрироваться"
+              )}
             </Button>
           </Form>
         </Col>

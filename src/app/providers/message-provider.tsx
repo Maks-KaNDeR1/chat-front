@@ -1,6 +1,7 @@
 import React, {createContext, useContext, useState} from "react";
 import {getChatMessages, sendMessage as sendMessageApi} from "@/src/entities/message";
 import {Message} from "@/src/entities/message";
+import {useLoadingStore} from "@/src/shared/store";
 
 interface MessageContextType {
   message: Record<string, Message[]>;
@@ -25,14 +26,18 @@ export function useMessageContext() {
 export function MessageProvider({children}: {children: React.ReactNode}) {
   const [message, setMessage] = useState<Record<string, Message[]>>({});
 
+  const {setLoading} = useLoadingStore();
+
   const getMessageChatId = (chatId: string): Message[] => {
     return message[chatId] || [];
   };
 
   const loadMessagesForChat = async (chatId: string) => {
+    setLoading(true);
+
     try {
       const res = await getChatMessages(chatId);
-      if (res.status) {
+      if (res.success) {
         setMessage(prev => ({
           ...prev,
           [chatId]: res.result,
@@ -40,6 +45,8 @@ export function MessageProvider({children}: {children: React.ReactNode}) {
       }
     } catch (e) {
       console.error("Failed to load chat messages:", e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,13 +55,14 @@ export function MessageProvider({children}: {children: React.ReactNode}) {
     content: string,
     files: File[] = []
   ) => {
+    setLoading(true);
     try {
       const formData = new FormData();
       formData.append("text", content);
-      files.forEach(file => formData.append("files", file));
+      files.forEach(file => formData.append("file", file));
 
       const res = await sendMessageApi(chatId, formData);
-      if (res.status) {
+      if (res.success) {
         setMessage(prev => {
           const existing = prev[chatId] || [];
           return {
@@ -65,6 +73,8 @@ export function MessageProvider({children}: {children: React.ReactNode}) {
       }
     } catch (e) {
       console.error("Failed to send message:", e);
+    } finally {
+      setLoading(false);
     }
   };
 

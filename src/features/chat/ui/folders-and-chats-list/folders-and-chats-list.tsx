@@ -42,7 +42,7 @@ export const FoldersAndChatsList = ({
     updateChat(chatId, updatedChat);
   };
   const addNewFolderHandler = async (folderName: string): Promise<string | null> => {
-    const ownerId = useAuthStore.getState().user?.id;
+    const ownerId = useAuthStore.getState().user?._id;
 
     if (!ownerId) return null;
 

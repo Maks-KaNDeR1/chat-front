@@ -46,7 +46,7 @@ export const ChatComponent = ({
   const {chats, addNewChat} = useChatContext();
   const {addNewFolder} = useFolderContext();
   const [showSidebar, setShowSidebar] = useState(false);
-  const userId = useAuthStore.getState().user?.id;
+  const userId = useAuthStore(state => state.user?._id);
 
   const currentDialog = currentChatId ? getMessageChatId(currentChatId) : [];
   const name = getCurrentChatName(currentChatId, chats, currentFolderId);
@@ -59,15 +59,18 @@ export const ChatComponent = ({
         <meta name="keywords" content="Chat" />
       </Head>
 
-      <Row>
+      <Row style={{height: "calc(100vh - 70px)"}}>
         <Col
           lg={4}
-          className="d-none d-lg-block"
-          style={{height: "calc(100vh - 75px)", borderRadius: 40}}
+          className="d-none d-lg-block h-100"
+          style={{borderRadius: 40}}
+          // style={{height: "calc(100vh - 75px)", borderRadius: 40}}
         >
           <HeaderChat
             handleSearch={handleSearch}
             addNewFolder={(name: string) => {
+              console.log(userId);
+
               if (userId) {
                 addNewFolder(name, userId);
               }
@@ -84,7 +87,13 @@ export const ChatComponent = ({
           />
         </Col>
 
-        <Col xs={12} lg={8} style={{height: "calc(100vh - 70px)", position: "relative"}}>
+        <Col
+          xs={12}
+          lg={8}
+          className="h-100"
+          style={{position: "relative"}}
+          // style={{height: "calc(100vh - 70px)", position: "relative"}}
+        >
           <Button
             variant="light"
             onClick={() => setShowSidebar(true)}

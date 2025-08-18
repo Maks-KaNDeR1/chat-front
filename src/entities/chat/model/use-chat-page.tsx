@@ -2,9 +2,12 @@ import {useState, useCallback, useEffect} from "react";
 import {useRouter} from "next/router";
 import {useChatContext, useFolderContext, useMessageContext} from "@/src/app/providers";
 import {useInitSelectionFromPath, useSortedAndFiltered} from "../lib";
-import {useAuthStatus, useAuthStore} from "@/src/features/auth";
+import {useAuthStore} from "@/src/features/auth";
+import {useFetchUser} from "../../user";
+import {useLoadingStore} from "@/src/shared/store";
 
 export const useChatPage = () => {
+  useFetchUser();
   const {
     chats,
     currentChatId,
@@ -21,10 +24,29 @@ export const useChatPage = () => {
   const {sendMessageToChat, loadMessagesForChat} = useMessageContext();
   const router = useRouter();
   const isLoaded = !chatsLoading && !foldersLoading;
-  const userId = useAuthStore.getState().user?.id;
-  const isAuthorized = useAuthStatus(state => state.isAuthorized);
-
+  const isAuthorized = useAuthStore(state => state.isAuthorized);
+  const userId = useAuthStore(state => state.user?._id);
   const [searchQuery, setSearchQuery] = useState("");
+
+  console.log(isAuthorized);
+
+  useEffect(() => {
+    if (!isAuthorized) {
+      router.push("/login");
+    } else {
+      if (router.asPath === "/login" || router.asPath === "/register") {
+        router.push("/");
+      }
+    }
+  }, [isAuthorized, router]);
+
+  const {setLoading} = useLoadingStore();
+
+  useEffect(() => {
+    if (isAuthorized) {
+      setLoading(!isLoaded);
+    }
+  }, [isLoaded]);
 
   // Для временного хранения сообщения до создания чата
   const [pendingMessage, setPendingMessage] = useState<{
@@ -72,45 +94,38 @@ export const useChatPage = () => {
   const handleSearch = (query: string) => setSearchQuery(query);
 
   const resetSelectedFoldersAndChats = () => {
-    selectFolder(null);
+    selectChat(null);
     selectFolder(null);
   };
 
-  const sendMessage = useCallback(
+  const onSendMessage = useCallback(
     async (message: string, files: File[] = []) => {
-      if (!currentChatId) {
+      if (!userId) return;
+
+      let chatIdToSend = currentChatId;
+
+      // Если нет текущего чата — создаём
+      if (!chatIdToSend) {
         const folderKey = currentFolderId || "default";
-        // const folderKey = currentFolderId || null;;
         const newChatName = message.slice(0, 20) || "New Chat";
 
-        if (userId) {
-          // ПОКА ТОЛЬКО ЗАРЕГАНЫМ
-          const newChatId = await addNewChat(newChatName, folderKey, userId);
+        // создаём чат
+        chatIdToSend = await addNewChat(newChatName, folderKey, userId);
+        selectChat(chatIdToSend);
 
-          setPendingMessage({message, files});
-          selectChat(newChatId);
-          router.push(
-            folderKey && folderKey !== "default"
-              ? `/${folderKey}/${newChatId}`
-              : `/${newChatId}`
-          );
-        }
-      } else if (pendingMessage) {
-        await sendMessageToChat(
-          currentChatId,
-          pendingMessage.message,
-          pendingMessage.files
+        router.push(
+          folderKey && folderKey !== "default"
+            ? `/${folderKey}/${chatIdToSend}`
+            : `/${chatIdToSend}`
         );
-        setPendingMessage(null);
-      } else {
-        await sendMessageToChat(currentChatId, message);
       }
+
+      await sendMessageToChat(chatIdToSend, message, files);
     },
     [
       currentChatId,
       currentFolderId,
       addNewChat,
-      pendingMessage,
       selectChat,
       userId,
       router,
@@ -137,7 +152,7 @@ export const useChatPage = () => {
     currentChatId,
     currentFolderId,
     notFound,
-    sendMessage,
+    onSendMessage,
     isLoaded,
   };
 };

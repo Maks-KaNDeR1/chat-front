@@ -66,8 +66,8 @@ export const ChatsList = React.memo(
     };
 
     const handleDragStart = (e: React.DragEvent, chat: Chat) => {
-      setDraggedChatId(chat.id);
-      e.dataTransfer.setData("chatId", chat.id);
+      setDraggedChatId(chat._id);
+      e.dataTransfer.setData("chatId", chat._id);
       e.dataTransfer.effectAllowed = "move";
     };
 
@@ -83,33 +83,33 @@ export const ChatsList = React.memo(
       <div onDragOver={handleDragOver}>
         {items.map(chat => (
           <div
-            key={chat.id}
-            data-id={chat.id}
+            key={chat._id}
+            data-id={chat._id}
             draggable={sortable}
             onDragStart={e => handleDragStart(e, chat)}
             onDragEnd={handleDragEnd}
             style={{
-              opacity: draggedChatId === chat.id ? 0.5 : 1,
+              opacity: draggedChatId === chat._id ? 0.5 : 1,
               transition: "all 0.2s",
               padding: "2px",
               borderRadius: "4px",
             }}
           >
             <EditableListItem
-              id={chat.id}
+              id={chat._id}
               name={chat.name}
-              isActive={currentChatId === chat.id}
+              isActive={currentChatId === chat._id}
               onSelect={onSelectChat}
               onRename={(id: string, newName: string) => onRenameChat(id, newName, chat)}
               onDelete={onDeleteChat}
               moveIcon={<Folder />}
-              onMoveClick={e => handleMoveIconClick(chat.id, e)}
+              onMoveClick={e => handleMoveIconClick(chat._id, e)}
               draggable={sortable}
             />
             <MovePopover
-              show={showMoveMenuId === chat.id}
+              show={showMoveMenuId === chat._id}
               target={target}
-              chatId={chat.id}
+              chatId={chat._id}
               folders={filteredFolders}
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}

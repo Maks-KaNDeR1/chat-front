@@ -1,7 +1,7 @@
 import {NextPage} from "next";
 import {ChatComponent} from "@/src/features/chat";
 import {useChatPage} from "@/src/entities/chat";
-import {Spinner} from "react-bootstrap";
+import {useLoadingStore} from "@/src/shared/store";
 
 const HomePage: NextPage = () => {
   const {
@@ -14,10 +14,11 @@ const HomePage: NextPage = () => {
     handleSearch,
     searchQuery,
     notFound,
-    isLoaded,
   } = useChatPage();
 
-  if (notFound && isLoaded) {
+  const isLoading = useLoadingStore(state => state.isLoading);
+
+  if (notFound && !isLoading) {
     return (
       <div style={{padding: 20, color: "red", textAlign: "center", fontWeight: "bold"}}>
         Чат или папка не найдены
@@ -27,8 +28,6 @@ const HomePage: NextPage = () => {
 
   return (
     <div style={{position: "relative"}}>
-      {!isLoaded && <Spinner animation="border" variant="secondary" />}
-
       <ChatComponent
         currentChatId={currentChatId}
         currentFolderId={currentFolderId}

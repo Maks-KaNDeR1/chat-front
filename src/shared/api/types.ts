@@ -1,10 +1,10 @@
 export type ApiSuccess<T> = {
-  status: true;
+  success: true;
   result: T;
 };
 
 export type ApiError = {
-  status: false;
+  success: false;
   error: string;
 };
 

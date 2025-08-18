@@ -1,45 +1,50 @@
-import React, {useState} from "react";
+import React, {useState, useRef} from "react";
 import {useRouter} from "next/router";
 import {useSnackbar} from "notistack";
-import {Form, Button, Container, Row, Col} from "react-bootstrap";
+import {Form, Button, Container, Row, Col, Spinner} from "react-bootstrap";
 import {login} from "../api";
-import {AuthPayload, useAuthStatus, useAuthStore} from "../model";
+import {useAuthStore} from "../model";
 import {getUserByToken} from "@/src/entities/user/api";
 
 export const LoginForm = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [validated, setValidated] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
   const {enqueueSnackbar} = useSnackbar();
-  const setUser = useAuthStore(state => state.setUser);
+  const {setUser, setIsAuthorization} = useAuthStore(state => state);
+
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setValidated(true);
 
-    if (!email || !password) {
+    if (!username || !password) {
       enqueueSnackbar("Пожалуйста, заполните все поля.", {variant: "error"});
+      buttonRef.current?.scrollIntoView({behavior: "smooth", block: "center"});
       return;
     }
 
-    const payload: AuthPayload = {username: email, password};
-    const data = await login(payload);
+    setLoading(true);
+    try {
+      const data = await login({username, password});
 
-    if (data.status) {
-      enqueueSnackbar("Успешный вход!", {variant: "success"});
-      localStorage.setItem("token", data.result);
+      if (data.success) {
+        setIsAuthorization();
+        localStorage.setItem("token", data.result);
+        router.push("/");
 
-      getUserByToken(data.result).then(me => {
-        if (!me) return;
+        const me = await getUserByToken(data.result);
+        if (me) setUser(me.result);
 
-        setUser(me.data, data.result);
-      });
-
-      useAuthStatus.getState().setAuthorized(true);
-      router.push("/");
-    } else {
-      enqueueSnackbar(data.error, {variant: "error"});
+        enqueueSnackbar("Успешный вход!", {variant: "success"});
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,16 +58,13 @@ export const LoginForm = () => {
               <Form.Label>Email</Form.Label>
               <Form.Control
                 required
-                type="email"
-                placeholder="Введите email"
+                type="text"
+                placeholder="Введите логин"
                 className="rounded-5"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                isInvalid={validated && !email}
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                isInvalid={validated && !username}
               />
-              <Form.Control.Feedback type="invalid">
-                Пожалуйста, введите ваш email.
-              </Form.Control.Feedback>
             </Form.Group>
 
             <Form.Group controlId="formPassword" className="mb-3">
@@ -81,8 +83,28 @@ export const LoginForm = () => {
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Button variant="outline-secondary" type="submit" className="w-100">
-              Войти
+            <Button
+              ref={buttonRef}
+              variant="outline-secondary"
+              type="submit"
+              className="w-100"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Spinner
+                    as="span"
+                    animation="border"
+                    size="sm"
+                    role="status"
+                    aria-hidden="true"
+                    className="me-2"
+                  />
+                  Вход...
+                </>
+              ) : (
+                "Войти"
+              )}
             </Button>
           </Form>
         </Col>

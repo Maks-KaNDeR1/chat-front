@@ -10,17 +10,18 @@ export const authRequest = async (
   try {
     const data = await apiClient(url, "post", payload, token);
 
-    if (data.status) {
+    if (data.success) {
       return data;
     } else {
-      enqueueSnackbar(data.error || "Ошибка авторизации", {variant: "error"});
+      enqueueSnackbar(data.response?.data?.error || "Ошибка авторизации", {
+        variant: "error",
+      });
       return data;
     }
   } catch (error: any) {
-    console.error(error.response?.data || error.message);
     enqueueSnackbar(error.response?.data?.error || "Сервер недоступен", {
       variant: "error",
     });
-    return {status: false, error: "Server error"};
+    return {success: false, error: error?.error};
   }
 };

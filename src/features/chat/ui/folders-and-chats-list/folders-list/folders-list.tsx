@@ -31,18 +31,18 @@ export const FoldersList = ({
   return (
     <ListGroup>
       {folders.map(folder => {
-        const isActive = currentFolderId === folder.id;
-        const isHovered = hoveredFolderId === folder.id;
-        const folderChats = Object.values(chats[folder.id] || {});
+        const isActive = currentFolderId === folder._id;
+        const isHovered = hoveredFolderId === folder._id;
+        const folderChats = Object.values(chats[folder._id] || {});
         const hasChats = folderChats.length > 0;
 
         return (
-          <React.Fragment key={folder.id}>
+          <React.Fragment key={folder._id}>
             <div
-              data-folder-id={folder.id}
+              data-folder-id={folder._id}
               onDragOver={e => {
                 e.preventDefault();
-                setHoveredFolderId(folder.id);
+                setHoveredFolderId(folder._id);
               }}
               onDragLeave={() => {
                 setHoveredFolderId(null);
@@ -51,7 +51,7 @@ export const FoldersList = ({
                 e.preventDefault();
                 const chatId = e.dataTransfer.getData("chatId");
                 if (chatId) {
-                  onMoveChatToFolder(chatId, folder.id);
+                  onMoveChatToFolder(chatId, folder._id);
                 }
                 setHoveredFolderId(null);
               }}
@@ -63,7 +63,7 @@ export const FoldersList = ({
               }}
             >
               <EditableListItem
-                id={folder.id}
+                id={folder._id}
                 name={folder.name}
                 isActive={isActive}
                 icon={
@@ -82,10 +82,10 @@ export const FoldersList = ({
               <div style={{paddingLeft: 24}}>
                 <ChatsList
                   sortable
-                  dropFolderId={folder.id}
+                  dropFolderId={folder._id}
                   currentChatId={currentChatId}
                   chats={folderChats}
-                  onSelectChat={(id: string) => onSelectChat(id, folder.id)}
+                  onSelectChat={(id: string) => onSelectChat(id, folder._id)}
                   onRenameChat={onRenameChat}
                   onDeleteChat={onDeleteChat}
                   folders={folders}

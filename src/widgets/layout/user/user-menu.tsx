@@ -2,6 +2,7 @@ import React from "react";
 import {Dropdown} from "react-bootstrap";
 import {useRouter} from "next/router";
 import {User} from "@/src/entities/user";
+import {useAuthStore} from "@/src/features/auth";
 
 type Props = {
   user: User;
@@ -9,6 +10,7 @@ type Props = {
 
 export const UserMenu = ({user}: Props) => {
   const router = useRouter();
+  const {logout} = useAuthStore(state => state);
 
   return (
     <Dropdown align="end">
@@ -112,7 +114,10 @@ export const UserMenu = ({user}: Props) => {
         <Dropdown.Item
           onClick={() => {
             const confirmed = window.confirm("Вы уверены, что хотите выйти?");
-            // if (confirmed) { logout }
+            if (confirmed) {
+              logout();
+              localStorage.removeItem("token");
+            }
           }}
           style={{backgroundColor: "transparent", color: "#212529"}}
           onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#e9ecef")}

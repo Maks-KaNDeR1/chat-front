@@ -4,5 +4,5 @@ export type AuthPayload = {
 };
 
 export type AuthResponse =
-  | {status: true; result: string}
-  | {status: false; error: string};
+  | {success: true; result: string}
+  | {success: false; error: string};

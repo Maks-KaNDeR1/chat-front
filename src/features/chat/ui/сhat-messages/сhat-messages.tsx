@@ -13,7 +13,7 @@ export const ChatMessages = ({name, message, addNewChat}: ChatMessagesProps) => 
   const [modalFile, setModalFile] = useState<string | null>(null);
   const [showAddChatModal, setShowAddChatModal] = useState(false);
   const router = useRouter();
-  const {resetSelectedFoldersAndChats: reset, sendMessage: onSendMessage} = useChatPage();
+  const {resetSelectedFoldersAndChats: reset, onSendMessage} = useChatPage();
 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -84,7 +84,7 @@ export const ChatMessages = ({name, message, addNewChat}: ChatMessagesProps) => 
           scrollBehavior: "smooth",
         }}
       >
-        {message.length === 0 && (
+        {message?.length === 0 && (
           <div
             className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center text-secondary"
             style={{
@@ -106,7 +106,7 @@ export const ChatMessages = ({name, message, addNewChat}: ChatMessagesProps) => 
             const isUser = msg.role === "user";
             return (
               <div
-                key={index}
+                key={msg._id}
                 className={`d-flex ${
                   isUser ? "justify-content-end" : "justify-content-start"
                 } mb-2`}
@@ -125,14 +125,14 @@ export const ChatMessages = ({name, message, addNewChat}: ChatMessagesProps) => 
                     ...(isUser ? {backgroundColor: "#ced4daeb"} : {}),
                   }}
                 >
-                  {msg.imageUrls.length > 0 && (
+                  {msg?.imageUrls?.length > 0 && (
                     <FilesBlock
                       filesFromUser={isUser}
                       filesArr={msg.imageUrls}
                       onFileClick={openFileModal}
                     />
                   )}
-                  <div>{msg.text}</div>
+                  <div>{msg.name}</div>
                 </div>
               </div>
             );

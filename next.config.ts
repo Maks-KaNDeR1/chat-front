@@ -5,6 +5,14 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   output: "export",
   devIndicators: false,
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://oai.factfactor.ru/api/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

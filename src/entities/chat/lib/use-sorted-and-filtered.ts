@@ -3,18 +3,20 @@ import {Folder} from "../../folder";
 import {Chat} from "../model";
 
 export const useSortedAndFiltered = (
-  folders: Record<string, Folder>,
-  chats: Record<string, Record<string, Chat>>,
+  folders: Record<string, Folder> | undefined,
+  chats: Record<string, Record<string, Chat>> | undefined,
   searchQuery: string
 ) => {
   const sortedFolders = useMemo<Folder[]>(() => {
+    if (!folders) return [];
     return Object.values(folders).sort(
       (a, b) => Number(b.createdAt) - Number(a.createdAt)
     );
   }, [folders]);
 
   const sortedChats = useMemo<Chat[]>(() => {
-    return Object.values(chats["default"] || {}).sort(
+    if (!chats || !chats["default"]) return [];
+    return Object.values(chats["default"]).sort(
       (a, b) => Number(b.createdAt) - Number(a.createdAt)
     );
   }, [chats]);

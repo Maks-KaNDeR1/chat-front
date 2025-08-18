@@ -7,7 +7,7 @@ import {
   updateFolder,
   deleteFolder,
 } from "@/src/entities/folder/api";
-import {useAuthStatus} from "@/src/features/auth";
+import {useAuthStore} from "@/src/features/auth";
 
 interface FoldersContextType {
   folders: Record<string, Folder>;
@@ -39,7 +39,7 @@ export function FoldersProvider({children}: {children: React.ReactNode}) {
   const [folders, setFolders] = useState<Record<string, Folder>>({});
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const router = useRouter();
-  const {isAuthorized} = useAuthStatus();
+  const isAuthorized = useAuthStore(state => state.isAuthorized);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,10 +49,10 @@ export function FoldersProvider({children}: {children: React.ReactNode}) {
       try {
         const res = await getFolders();
 
-        if (res.status) {
+        if (res.success) {
           const foldersMap: Record<string, Folder> = {};
           res.result.forEach(f => {
-            foldersMap[f.id] = f;
+            foldersMap[f._id] = f;
           });
           setFolders(foldersMap);
         }
@@ -63,16 +63,16 @@ export function FoldersProvider({children}: {children: React.ReactNode}) {
       }
     };
 
-    // if (isAuthorized) {
-    fetchFolders();
-    // }
+    if (isAuthorized) {
+      fetchFolders();
+    }
   }, [isAuthorized]);
 
   const addNewFolder = async (name: string, ownerId: string): Promise<string> => {
     const res = await createFolder(ownerId, name);
-    if (res.status) {
-      setFolders(prev => ({...prev, [res.result.id]: res.result}));
-      return res.result.id;
+    if (res.success) {
+      setFolders(prev => ({...prev, [res.result._id]: res.result}));
+      return res.result._id;
     }
     throw new Error("Failed to create folder");
   };
@@ -84,7 +84,7 @@ export function FoldersProvider({children}: {children: React.ReactNode}) {
     const updatedFolder = {...folder, name: newName};
     const res = await updateFolder(id, updatedFolder);
 
-    if (res.status) {
+    if (res.success) {
       setFolders(prev => ({...prev, [id]: res.result}));
     }
   };

@@ -1,10 +1,10 @@
-import {LoginForm, useAuthStatus} from "@/src/features/auth";
+import {LoginForm, useAuthStore} from "@/src/features/auth";
 import {NextPage} from "next";
 import Head from "next/head";
 import {useRouter} from "next/router";
 
 const LoginPage: NextPage = () => {
-  const isAuthorized = useAuthStatus(state => state.isAuthorized);
+  const isAuthorized = useAuthStore(state => state.isAuthorized);
   const router = useRouter();
 
   if (isAuthorized) {

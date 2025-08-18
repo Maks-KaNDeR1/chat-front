@@ -1,11 +1,11 @@
 import React from "react";
 import {Navbar, Button} from "react-bootstrap";
 import {UserMenu} from "../user";
-import {useAuthStatus, useAuthStore} from "@/src/features/auth";
+import {useAuthStore} from "@/src/features/auth";
 
 export const Header = () => {
   const {user} = useAuthStore();
-  const {isAuthorized} = useAuthStatus();
+  const {isAuthorized} = useAuthStore();
 
   return (
     <Navbar

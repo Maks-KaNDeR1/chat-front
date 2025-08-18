@@ -34,7 +34,6 @@ export const ChatInput = ({onSend}: ChatInputProps) => {
     const trimmed = message.trim();
     if (!trimmed && files.length === 0) return;
 
-    // Передаем текст и файлы в onSend, API обработает imageUrls
     onSend(trimmed, files);
 
     setMessage("");

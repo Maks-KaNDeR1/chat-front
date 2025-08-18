@@ -7,7 +7,7 @@ import {
   updateChat,
   deleteChat as deleteChatApi,
 } from "@/src/entities/chat/api";
-import {useAuthStatus} from "@/src/features/auth";
+import {useAuthStore} from "@/src/features/auth";
 
 interface ChatsContextType {
   chats: Record<string, Record<string, Chat>>;
@@ -36,7 +36,7 @@ export function useChatContext() {
 export function ChatProvider({children}: {children: React.ReactNode}) {
   const [chats, setChats] = useState<Record<string, Record<string, Chat>>>({});
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
-  const {isAuthorized} = useAuthStatus();
+  const {isAuthorized} = useAuthStore();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
 
@@ -45,12 +45,13 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
       setLoading(true);
       try {
         const res = await getChats();
-        if (res.status) {
+
+        if (res.success) {
           const grouped: Record<string, Record<string, Chat>> = {};
           res.result.forEach(chat => {
-            const folderKey = chat.folder?.id || "default";
+            const folderKey = chat.folder?._id || "default";
             if (!grouped[folderKey]) grouped[folderKey] = {};
-            grouped[folderKey][chat.id] = chat;
+            grouped[folderKey][chat._id] = chat;
           });
           setChats(grouped);
         }
@@ -61,9 +62,9 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
       }
     };
 
-    // if (isAuthorized) {
-    fetchChats();
-    // }
+    if (isAuthorized) {
+      fetchChats();
+    }
   }, [isAuthorized]);
 
   const selectChatHandler = (id: string | null) => {
@@ -73,23 +74,27 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
   const addNewChatHandler = async (name: string, folderId: string, ownerId: string) => {
     try {
       const res = await createChat(ownerId, name, folderId);
-      if (res.status) {
-        const folderKey = res.result.folder?.id || "default";
+
+      if (res.success) {
+        const folderKey = res.result.folder?._id || "default";
 
         setChats(prev => ({
           ...prev,
           [folderKey]: {
             ...(prev[folderKey] || {}),
-            [res.result.id]: res.result,
+            [res.result._id]: res.result,
           },
         }));
 
-        setCurrentChatId(res.result.id);
-        return res.result.id;
+        setCurrentChatId(res.result._id);
+        return res.result._id;
       }
     } catch (e) {
       console.error("Failed to create chat:", e);
+    } finally {
+      setLoading(false);
     }
+
     throw new Error("Failed to create chat");
   };
 
@@ -106,7 +111,7 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
 
     try {
       const res = await updateChat(chatId, updatedChat);
-      if (res?.result) {
+      if (res?.success) {
         setChats(prev => ({
           ...prev,
           [folderKey!]: {
@@ -133,7 +138,7 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
 
     try {
       const res = await deleteChatApi(chatId);
-      if (res?.result) {
+      if (res?.success) {
         setChats(prev => {
           const updatedFolder = {...prev[folderKey!]};
           delete updatedFolder[chatId];
