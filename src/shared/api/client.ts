@@ -19,7 +19,7 @@ export const apiClient = async (
       data,
       baseURL: "http://oai.factfactor.ru",
       headers: {
-        Accept: "application/json",
+        Accept: isFormData ? "multipart/form-data" : "application/json",
         ...(isFormData ? {} : {"Content-Type": "application/json"}),
         Authorization: bearer ? `Bearer ${bearer}` : "",
       },

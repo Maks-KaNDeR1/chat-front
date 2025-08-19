@@ -1,7 +1,7 @@
 import React, {createContext, useContext, useState} from "react";
 import {getChatMessages, sendMessage as sendMessageApi} from "@/src/entities/message";
 import {Message} from "@/src/entities/message";
-import {useLoadingStore} from "@/src/shared/store";
+import {useLoadingAppStore} from "@/src/shared/store";
 
 interface MessageContextType {
   message: Record<string, Message[]>;
@@ -26,7 +26,7 @@ export function useMessageContext() {
 export function MessageProvider({children}: {children: React.ReactNode}) {
   const [message, setMessage] = useState<Record<string, Message[]>>({});
 
-  const {setLoading} = useLoadingStore();
+  const {setLoading} = useLoadingAppStore();
 
   const getMessageChatId = (chatId: string): Message[] => {
     return message[chatId] || [];
@@ -55,6 +55,24 @@ export function MessageProvider({children}: {children: React.ReactNode}) {
     content: string,
     files: File[] = []
   ) => {
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage: Message = {
+      _id: tempId,
+      owner: {} as any,
+      role: "user",
+      type: files.length ? "file" : "text",
+      text: content,
+      imageUrls: [],
+      meta: {},
+      createdAt: new Date().toISOString(),
+      name: "You",
+    };
+
+    setMessage(prev => ({
+      ...prev,
+      [chatId]: [...(prev[chatId] || []), {...tempMessage, meta: {status: "pending"}}],
+    }));
+
     setLoading(true);
     try {
       const formData = new FormData();
@@ -62,17 +80,37 @@ export function MessageProvider({children}: {children: React.ReactNode}) {
       files.forEach(file => formData.append("file", file));
 
       const res = await sendMessageApi(chatId, formData);
-      if (res.success) {
-        setMessage(prev => {
-          const existing = prev[chatId] || [];
+
+      setMessage(prev => {
+        const existing = prev[chatId] || [];
+
+        if (res.success) {
+          // заменяем временное сообщение на настоящее и добавляем ответ
           return {
             ...prev,
-            [chatId]: [...existing, res.result.message, res.result.answer],
+            [chatId]: [
+              ...existing.map(m =>
+                m._id === tempId ? {...res.result.message, meta: {status: "sent"}} : m
+              ),
+              res.result.answer,
+            ],
           };
-        });
-      }
+        }
+
+        // при ошибке убираем временное
+        return {
+          ...prev,
+          [chatId]: existing.filter(m => m._id !== tempId),
+        };
+      });
     } catch (e) {
       console.error("Failed to send message:", e);
+      // при ошибке убираем временное
+
+      setMessage(prev => ({
+        ...prev,
+        [chatId]: (prev[chatId] || []).filter(m => m._id !== tempId),
+      }));
     } finally {
       setLoading(false);
     }

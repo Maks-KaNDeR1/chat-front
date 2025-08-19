@@ -1,3 +1,5 @@
+"use client";
+
 import React, {useState} from "react";
 import Head from "next/head";
 import {useChatContext, useFolderContext, useMessageContext} from "@/src/app/providers";
@@ -8,7 +10,7 @@ import {ChatComponentProps} from "./chat.props";
 import {FoldersAndChatsList} from "../folders-and-chats-list";
 import styles from "./chat.module.css";
 import {HeaderChat} from "../header";
-import {Chat as ChatType} from "@/src/entities/chat";
+import {Chat as ChatType, useChatPage} from "@/src/entities/chat";
 import {useAuthStore} from "@/src/features/auth";
 
 const getCurrentChatName = (
@@ -33,18 +35,18 @@ const getCurrentChatName = (
   return "Новый чат";
 };
 
-export const ChatComponent = ({
-  currentChatId,
-  currentFolderId,
-  filteredChats,
-  filteredFolders,
-  handleSearch,
-  handleSelectChat,
-  handleSelectFolder,
-}: ChatComponentProps) => {
+export const ChatComponent = () => {
+  const {
+    currentChatId,
+    currentFolderId,
+    handleSelectChat,
+    handleSelectFolder,
+    handleSearch,
+  } = useChatPage();
+
   const {getMessageChatId} = useMessageContext();
   const {chats, addNewChat} = useChatContext();
-  const {addNewFolder} = useFolderContext();
+  const {folders, addNewFolder} = useFolderContext();
   const [showSidebar, setShowSidebar] = useState(false);
   const userId = useAuthStore(state => state.user?._id);
 
@@ -69,8 +71,6 @@ export const ChatComponent = ({
           <HeaderChat
             handleSearch={handleSearch}
             addNewFolder={(name: string) => {
-              console.log(userId);
-
               if (userId) {
                 addNewFolder(name, userId);
               }
@@ -80,8 +80,8 @@ export const ChatComponent = ({
           <FoldersAndChatsList
             currentChatId={currentChatId}
             currentFolderId={currentFolderId}
-            foldersList={filteredFolders}
-            chatsList={filteredChats}
+            foldersList={Object.values(folders)}
+            chatsList={Object.values(chats["default"] || {})}
             handleSelectChat={handleSelectChat}
             handleSelectFolder={handleSelectFolder}
           />
@@ -143,8 +143,8 @@ export const ChatComponent = ({
           <FoldersAndChatsList
             currentChatId={currentChatId}
             currentFolderId={currentFolderId}
-            foldersList={filteredFolders}
-            chatsList={filteredChats}
+            foldersList={Object.values(folders)}
+            chatsList={Object.values(chats["default"] || {})}
             handleSelectChat={(chatId, folderId) => {
               handleSelectChat(chatId, folderId);
               setShowSidebar(false);

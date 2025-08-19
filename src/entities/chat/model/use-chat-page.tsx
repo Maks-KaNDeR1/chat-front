@@ -1,10 +1,12 @@
-import {useState, useCallback, useEffect} from "react";
+import {useState, useCallback, useEffect, useRef} from "react";
 import {useRouter} from "next/router";
 import {useChatContext, useFolderContext, useMessageContext} from "@/src/app/providers";
-import {useInitSelectionFromPath, useSortedAndFiltered} from "../lib";
+import {useSortedAndFiltered} from "../lib";
 import {useAuthStore} from "@/src/features/auth";
 import {useFetchUser} from "../../user";
-import {useLoadingStore} from "@/src/shared/store";
+import {useLoadingAppStore} from "@/src/shared/store";
+import {searchAll} from "../api";
+import {handleSearchApi} from "../../search";
 
 export const useChatPage = () => {
   useFetchUser();
@@ -13,62 +15,66 @@ export const useChatPage = () => {
     currentChatId,
     selectChat,
     addNewChat,
+    setChats,
     loading: chatsLoading,
   } = useChatContext();
   const {
     folders,
     currentFolderId,
     selectFolder,
+    setFolders,
     loading: foldersLoading,
   } = useFolderContext();
   const {sendMessageToChat, loadMessagesForChat} = useMessageContext();
   const router = useRouter();
   const isLoaded = !chatsLoading && !foldersLoading;
-  const isAuthorized = useAuthStore(state => state.isAuthorized);
+  const {isAuthorized, waiting} = useAuthStore(state => state);
   const userId = useAuthStore(state => state.user?._id);
-  const [searchQuery, setSearchQuery] = useState("");
-
-  console.log(isAuthorized);
+  const {setLoading} = useLoadingAppStore();
+  const initializedRef = useRef(false);
 
   useEffect(() => {
-    if (!isAuthorized) {
-      router.push("/login");
-    } else {
-      if (router.asPath === "/login" || router.asPath === "/register") {
-        router.push("/");
-      }
-    }
+    if (!isAuthorized && !waiting) router.push("/login");
   }, [isAuthorized, router]);
 
-  const {setLoading} = useLoadingStore();
-
   useEffect(() => {
-    if (isAuthorized) {
-      setLoading(!isLoaded);
-    }
+    if (isAuthorized) setLoading(!isLoaded);
   }, [isLoaded]);
 
-  // Для временного хранения сообщения до создания чата
+  // Инициализация из query
+  useEffect(() => {
+    if (!router.isReady || initializedRef.current) return;
+
+    const {folder, chat} = router.query;
+
+    if (folder && typeof folder === "string") selectFolder(folder);
+
+    if (chat && typeof chat === "string") {
+      selectChat(chat);
+      loadMessagesForChat(chat);
+    }
+
+    initializedRef.current = true;
+  }, [router.isReady]);
+
   const [pendingMessage, setPendingMessage] = useState<{
     message: string;
     files: File[];
   } | null>(null);
 
-  // Инициализация выбора папки и чата из URL
-  const {notFound} = useInitSelectionFromPath(
-    folders,
-    chats,
-    currentChatId,
-    currentFolderId,
-    selectFolder,
-    selectChat,
-    isLoaded
-  );
+  // Обновление query
+  const updateQuery = useCallback(
+    (chatId: string, folderId?: string | null) => {
+      const query: Record<string, string> = {};
+      if (folderId) query.folder = folderId;
+      query.chat = chatId;
 
-  const {filteredFolders, filteredChats} = useSortedAndFiltered(
-    folders,
-    chats,
-    searchQuery
+      const currentQuery = router.query;
+      if (currentQuery.chat !== query.chat || currentQuery.folder !== query.folder) {
+        router.replace({pathname: "/", query}, undefined, {shallow: true});
+      }
+    },
+    [router]
   );
 
   const handleSelectChat = useCallback(
@@ -76,26 +82,27 @@ export const useChatPage = () => {
       if (!chatId) return;
 
       selectChat(chatId);
-      if (folderId && folderId !== "default") {
-        selectFolder(folderId);
-        router.push(`/${folderId}/${chatId}`);
-      } else {
-        selectFolder(null);
-        router.push(`/${chatId}`);
-      }
+      if (folderId) selectFolder(folderId);
+      else selectFolder(null);
 
+      updateQuery(chatId, folderId);
       await loadMessagesForChat(chatId);
     },
-    [selectChat, selectFolder, router, loadMessagesForChat]
+    [selectChat, selectFolder, loadMessagesForChat, updateQuery]
   );
 
-  const handleSelectFolder = (folderId: string | null) => selectFolder(folderId);
+  const handleSelectFolder = (folderId: string | null) => {
+    selectFolder(folderId);
+  };
 
-  const handleSearch = (query: string) => setSearchQuery(query);
+  const handleSearch = async (query: string) => {
+    handleSearchApi(query, setChats, setFolders);
+  };
 
   const resetSelectedFoldersAndChats = () => {
     selectChat(null);
     selectFolder(null);
+    router.replace({pathname: "/", query: {}}, undefined, {shallow: true});
   };
 
   const onSendMessage = useCallback(
@@ -104,20 +111,14 @@ export const useChatPage = () => {
 
       let chatIdToSend = currentChatId;
 
-      // Если нет текущего чата — создаём
       if (!chatIdToSend) {
-        const folderKey = currentFolderId || "default";
+        const folderKey = currentFolderId || null;
         const newChatName = message.slice(0, 20) || "New Chat";
 
-        // создаём чат
-        chatIdToSend = await addNewChat(newChatName, folderKey, userId);
+        chatIdToSend = await addNewChat(newChatName, folderKey || "default", userId);
         selectChat(chatIdToSend);
 
-        router.push(
-          folderKey && folderKey !== "default"
-            ? `/${folderKey}/${chatIdToSend}`
-            : `/${chatIdToSend}`
-        );
+        updateQuery(chatIdToSend, folderKey);
       }
 
       await sendMessageToChat(chatIdToSend, message, files);
@@ -128,8 +129,8 @@ export const useChatPage = () => {
       addNewChat,
       selectChat,
       userId,
-      router,
       sendMessageToChat,
+      updateQuery,
     ]
   );
 
@@ -142,16 +143,14 @@ export const useChatPage = () => {
   }, [currentChatId, pendingMessage, sendMessageToChat]);
 
   return {
-    filteredFolders,
-    filteredChats,
+    folders,
+    chats,
     handleSelectChat,
     resetSelectedFoldersAndChats,
     handleSelectFolder,
     handleSearch,
-    searchQuery,
     currentChatId,
     currentFolderId,
-    notFound,
     onSendMessage,
     isLoaded,
   };

@@ -57,11 +57,14 @@ export const FilesBlock = ({filesArr, onFileClick, filesFromUser}: FilesBlockPro
   const anySelected = selectedIndices.size > 0;
 
   return (
-    <Container style={{position: "relative", maxWidth: "100%", margin: "auto"}}>
+    <Container
+      style={{position: "relative", maxWidth: "100%", padding: "0", margin: "auto"}}
+    >
       {showLeftButton && (
         <Button
           onClick={onScrollLeft}
           variant="dark"
+          size="lg"
           className={`${styles.scrollButton} ${styles.scrollButtonLeft}`}
           aria-label="Scroll left"
         >
@@ -99,10 +102,10 @@ export const FilesBlock = ({filesArr, onFileClick, filesFromUser}: FilesBlockPro
                 <Image
                   src={file}
                   alt={`Image ${idx}`}
-                  width={50}
-                  height={60}
+                  // width={50}
+                  height={100}
                   style={{
-                    borderRadius: "0.25rem",
+                    borderRadius: "1.5rem",
                     filter: isSelected ? "brightness(0.8)" : undefined,
                     objectFit: "cover",
                   }}
@@ -133,7 +136,7 @@ export const FilesBlock = ({filesArr, onFileClick, filesFromUser}: FilesBlockPro
       {showRightButton && (
         <Button
           onClick={onScrollRight}
-          size="sm"
+          size="lg"
           variant="dark"
           className={`${styles.scrollButton} ${styles.scrollButtonRight}`}
           aria-label="Scroll right"
@@ -185,6 +188,7 @@ export const FilesBlock = ({filesArr, onFileClick, filesFromUser}: FilesBlockPro
             <OverlayTrigger
               trigger="click"
               placement="bottom"
+              flip={true}
               rootClose
               overlay={
                 <Popover id="mobile-actions" style={{borderRadius: "0.5rem"}}>
@@ -209,8 +213,6 @@ export const FilesBlock = ({filesArr, onFileClick, filesFromUser}: FilesBlockPro
                         const selectedUrls = Array.from(selectedIndices).map(
                           idx => filesArr[idx]
                         );
-
-                        console.log(selectedUrls);
 
                         downloadFilesAsZip(selectedUrls);
                       }}

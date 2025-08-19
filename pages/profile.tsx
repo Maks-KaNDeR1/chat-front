@@ -1,29 +1,24 @@
 import {NextPage} from "next";
 import Head from "next/head";
-import React, {useState, ChangeEvent, useRef} from "react";
+import React, {useState, ChangeEvent, useRef, useEffect} from "react";
 import {Container, Form, Button, Image} from "react-bootstrap";
 import {X} from "react-bootstrap-icons";
-
-type User = {
-  name: string;
-  email?: string;
-  phone?: string;
-  avatarUrl?: string;
-};
+import {useAuthStore} from "@/src/features/auth";
 
 const ProfilePage: NextPage = () => {
-  const [user, setUser] = useState<User>({
-    name: "Maks",
-    email: "maks@test.com",
-    phone: "+123456789",
-    avatarUrl: "",
-  });
-
+  const {user, setUser} = useAuthStore();
+  const [formUser, setFormUser] = useState(user);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (user) {
+      setFormUser(user);
+    }
+  }, [user]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const {name, value} = e.target;
-    setUser(prev => ({...prev, [name]: value}));
+    setFormUser(prev => (prev ? {...prev, [name]: value} : null));
   };
 
   const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -31,17 +26,25 @@ const ProfilePage: NextPage = () => {
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setUser(prev => ({...prev, avatarUrl: reader.result as string}));
+        setFormUser(prev =>
+          prev ? {...prev, avatarUrl: reader.result as string} : null
+        );
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleRemoveAvatar = () => {
-    setUser(prev => ({...prev, avatarUrl: ""}));
+    setFormUser(prev => (prev ? {...prev, avatarUrl: ""} : null));
   };
 
-  const handleSave = () => {};
+  const handleSave = () => {
+    if (formUser) {
+      setUser(formUser);
+    }
+  };
+
+  if (!formUser) return null;
 
   return (
     <>
@@ -63,10 +66,10 @@ const ProfilePage: NextPage = () => {
                 marginBottom: 8,
               }}
             >
-              {user.avatarUrl ? (
+              {formUser.avatarUrl ? (
                 <>
                   <Image
-                    src={user.avatarUrl}
+                    src={formUser.avatarUrl}
                     roundedCircle
                     width={100}
                     height={100}
@@ -107,7 +110,7 @@ const ProfilePage: NextPage = () => {
                     fontSize: 40,
                   }}
                 >
-                  {user.name[0]?.toUpperCase()}
+                  {formUser.username[0]?.toUpperCase()}
                 </div>
               )}
             </div>
@@ -134,8 +137,8 @@ const ProfilePage: NextPage = () => {
             </Form.Label>
             <Form.Control
               className="rounded-5"
-              name="name"
-              value={user.name}
+              name="username"
+              value={formUser.username}
               onChange={handleChange}
             />
           </Form.Group>
@@ -147,7 +150,7 @@ const ProfilePage: NextPage = () => {
             <Form.Control
               className="rounded-5"
               name="email"
-              value={user.email}
+              value={formUser.email}
               onChange={handleChange}
             />
           </Form.Group>
@@ -159,7 +162,7 @@ const ProfilePage: NextPage = () => {
             <Form.Control
               className="rounded-5"
               name="phone"
-              value={user.phone}
+              value={(formUser as any).phone || ""}
               onChange={handleChange}
             />
           </Form.Group>

@@ -14,6 +14,11 @@ export const ChatMessages = ({name, message, addNewChat}: ChatMessagesProps) => 
   const [showAddChatModal, setShowAddChatModal] = useState(false);
   const router = useRouter();
   const {resetSelectedFoldersAndChats: reset, onSendMessage} = useChatPage();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -41,6 +46,23 @@ export const ChatMessages = ({name, message, addNewChat}: ChatMessagesProps) => 
     }
   }, [message]);
 
+  // const imageUrls = [
+  //   "http://oai.factfactor.ru/images/1cf6e6ac5a2a40a98f7cea9841a20375.png",
+  //   "http://oai.factfactor.ru/images/bfcb97bba2514abb9930fa7fc048c52b.png",
+  //   "http://oai.factfactor.ru/images/bf67f9c8d99049a7b984b46355e0cb07.png",
+  //   "http://oai.factfactor.ru/images/40a0bc6995cb40dcbd188183fded62fc.png",
+  //   "http://oai.factfactor.ru/images/6f0a895732214f0094b7bf5390a2b11a.png",
+  //   "http://oai.factfactor.ru/images/ff8b4ce6afae483ab5aeef944bc94783.png",
+  //   "http://oai.factfactor.ru/images/bf67f9c8d99049a7b984b46355e0cb07.png",
+  //   "http://oai.factfactor.ru/images/40a0bc6995cb40dcbd188183fded62fc.png",
+  //   "http://oai.factfactor.ru/images/6f0a895732214f0094b7bf5390a2b11a.png",
+  //   "http://oai.factfactor.ru/images/ff8b4ce6afae483ab5aeef944bc94783.png",
+  //   "http://oai.factfactor.ru/images/bf67f9c8d99049a7b984b46355e0cb07.png",
+  //   "http://oai.factfactor.ru/images/40a0bc6995cb40dcbd188183fded62fc.png",
+  //   "http://oai.factfactor.ru/images/6f0a895732214f0094b7bf5390a2b11a.png",
+  //   "http://oai.factfactor.ru/images/ff8b4ce6afae483ab5aeef944bc94783.png",
+  // ]
+
   return (
     <div className="d-flex flex-column h-100 border rounded-5 p-3 position-relative">
       <div className="d-flex justify-content-between align-items-center mb-3 ps-5 ps-lg-0">
@@ -62,7 +84,7 @@ export const ChatMessages = ({name, message, addNewChat}: ChatMessagesProps) => 
             router.push("/");
           }}
           style={{whiteSpace: "nowrap"}}
-          disabled={router.asPath === "/"}
+          disabled={mounted ? router.asPath === "/" : false}
           variant="outline-secondary"
           size="sm"
         >
@@ -104,6 +126,9 @@ export const ChatMessages = ({name, message, addNewChat}: ChatMessagesProps) => 
           .reverse()
           .map((msg, index) => {
             const isUser = msg.role === "user";
+            const hasText = !!msg.text?.trim();
+            const hasImages = msg?.imageUrls?.length > 0;
+
             return (
               <div
                 key={msg._id}
@@ -112,7 +137,7 @@ export const ChatMessages = ({name, message, addNewChat}: ChatMessagesProps) => 
                 } mb-2`}
               >
                 <div
-                  className={`p-2 rounded-5 ${
+                  className={`rounded-5 ${
                     isUser ? "text-dark" : "bg-secondary text-white"
                   }`}
                   style={{
@@ -125,14 +150,17 @@ export const ChatMessages = ({name, message, addNewChat}: ChatMessagesProps) => 
                     ...(isUser ? {backgroundColor: "#ced4daeb"} : {}),
                   }}
                 >
-                  {msg?.imageUrls?.length > 0 && (
-                    <FilesBlock
-                      filesFromUser={isUser}
-                      filesArr={msg.imageUrls}
-                      onFileClick={openFileModal}
-                    />
+                  {hasImages && (
+                    <div className="p-2 w-100 rounded-5">
+                      <FilesBlock
+                        filesFromUser={isUser}
+                        filesArr={msg.imageUrls}
+                        onFileClick={openFileModal}
+                      />
+                    </div>
                   )}
-                  <div>{msg.name}</div>
+
+                  {hasText && <div className="p-2 w-100">{msg.text}</div>}
                 </div>
               </div>
             );
@@ -171,13 +199,14 @@ export const ChatMessages = ({name, message, addNewChat}: ChatMessagesProps) => 
         onHide={() => setModalFile(null)}
         centered
         size="lg"
+        contentClassName="custom-rounded-modal"
       >
         <Modal.Body className="text-center">
           {modalFile && (
             <img
               src={modalFile}
               alt="Full view"
-              style={{maxWidth: "100%", maxHeight: "80vh"}}
+              style={{maxWidth: "100%", borderRadius: "2rem", maxHeight: "80vh"}}
             />
           )}
         </Modal.Body>

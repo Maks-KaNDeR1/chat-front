@@ -4,12 +4,16 @@ import {getUserByToken} from "../api";
 import {useRouter} from "next/router";
 
 export const useFetchUser = () => {
-  const {user, isAuthorized, setUser, logout} = useAuthStore(state => state);
+  const {user, isAuthorized, setIsAuthorization, setUser, logout} = useAuthStore(
+    state => state
+  );
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const router = useRouter();
 
   useEffect(() => {
     if (!token || isAuthorized || user) return;
+
+    setIsAuthorization();
 
     (async () => {
       try {

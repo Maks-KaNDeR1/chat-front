@@ -1,5 +1,5 @@
 import React, {useState, useRef, useEffect} from "react";
-import {ListGroup, FormControl, Button, Overlay, Popover} from "react-bootstrap";
+import {ListGroup, FormControl, Button, Overlay, Popover, Spinner} from "react-bootstrap";
 import {Trash, Pencil} from "react-bootstrap-icons";
 import {EditableListItemProps} from "./editable-list-item.props";
 import styles from "./editable-list-item.module.css";
@@ -9,6 +9,7 @@ interface ExtendedEditableListItemProps extends EditableListItemProps {
   onMoveClick?: (event: React.MouseEvent<HTMLElement>) => void;
   draggable?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
+  loading?: boolean;
 }
 
 export const EditableListItem = ({
@@ -23,6 +24,7 @@ export const EditableListItem = ({
   onMoveClick,
   draggable = false,
   onDragStart,
+  loading = false,
 }: ExtendedEditableListItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(name);
@@ -91,39 +93,46 @@ export const EditableListItem = ({
               {icon}
               {name}
             </span>
-            <div className="d-flex gap-2">
-              {moveIcon && (
-                <Button
-                  variant="link"
-                  size="sm"
-                  className={`p-0 text-dark ${styles.btn}`}
-                  onClick={e => {
-                    e.stopPropagation();
-                    if (onMoveClick) onMoveClick(e);
-                  }}
-                >
-                  {moveIcon}
-                </Button>
+
+            <div className="d-flex align-items-center">
+              {loading ? (
+                <Spinner animation="border" size="sm" variant="secondary" />
+              ) : (
+                <div className="d-flex gap-2">
+                  {moveIcon && (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className={`p-0 text-dark ${styles.btn}`}
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (onMoveClick) onMoveClick(e);
+                      }}
+                    >
+                      {moveIcon}
+                    </Button>
+                  )}
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className={`p-0 text-dark ${styles.btn}`}
+                    onClick={e => {
+                      e.stopPropagation();
+                      setIsEditing(true);
+                    }}
+                  >
+                    <Pencil />
+                  </Button>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className={`p-0 text-dark ${styles.btn}`}
+                    onClick={handleDeleteClick}
+                  >
+                    <Trash />
+                  </Button>
+                </div>
               )}
-              <Button
-                variant="link"
-                size="sm"
-                className={`p-0 text-dark ${styles.btn}`}
-                onClick={e => {
-                  e.stopPropagation();
-                  setIsEditing(true);
-                }}
-              >
-                <Pencil />
-              </Button>
-              <Button
-                variant="link"
-                size="sm"
-                className={`p-0 text-dark ${styles.btn}`}
-                onClick={handleDeleteClick}
-              >
-                <Trash />
-              </Button>
             </div>
           </>
         )}

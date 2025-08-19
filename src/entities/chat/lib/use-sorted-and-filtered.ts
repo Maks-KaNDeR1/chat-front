@@ -10,14 +10,14 @@ export const useSortedAndFiltered = (
   const sortedFolders = useMemo<Folder[]>(() => {
     if (!folders) return [];
     return Object.values(folders).sort(
-      (a, b) => Number(b.createdAt) - Number(a.createdAt)
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [folders]);
 
   const sortedChats = useMemo<Chat[]>(() => {
     if (!chats || !chats["default"]) return [];
     return Object.values(chats["default"]).sort(
-      (a, b) => Number(b.createdAt) - Number(a.createdAt)
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [chats]);
 

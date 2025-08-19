@@ -5,7 +5,7 @@ type LoadingState = {
   setLoading: (value: boolean) => void;
 };
 
-export const useLoadingStore = create<LoadingState>(set => ({
-  isLoading: false,
+export const useLoadingAppStore = create<LoadingState>(set => ({
+  isLoading: true,
   setLoading: value => set({isLoading: value}),
 }));

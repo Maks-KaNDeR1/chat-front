@@ -4,6 +4,7 @@ import {Chat} from "@/src/entities/chat";
 import {EditableListItem} from "../editable-list-item";
 import {MovePopover} from "./move-popover";
 import {Folder} from "react-bootstrap-icons";
+import {useChatContext} from "@/src/app/providers";
 
 interface ExtendedChatListProps extends ChatListProps {
   draggedChatId: string | null;
@@ -33,6 +34,7 @@ export const ChatsList = React.memo(
     const [filteredFolders, setfilteredFolders] = useState(folders);
     const [newFolderName, setNewFolderName] = useState("");
     const [items, setItems] = useState<Chat[]>(chats);
+    const {loadingChatIds} = useChatContext();
 
     useEffect(() => {
       setItems(chats);
@@ -105,6 +107,7 @@ export const ChatsList = React.memo(
               moveIcon={<Folder />}
               onMoveClick={e => handleMoveIconClick(chat._id, e)}
               draggable={sortable}
+              loading={!!loadingChatIds[chat._id]}
             />
             <MovePopover
               show={showMoveMenuId === chat._id}

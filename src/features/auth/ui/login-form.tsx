@@ -1,3 +1,5 @@
+"use client";
+
 import React, {useState, useRef} from "react";
 import {useRouter} from "next/router";
 import {useSnackbar} from "notistack";
@@ -32,14 +34,13 @@ export const LoginForm = () => {
       const data = await login({username, password});
 
       if (data.success) {
-        setIsAuthorization();
         localStorage.setItem("token", data.result);
+        setIsAuthorization();
         router.push("/");
+        enqueueSnackbar("Успешный вход!", {variant: "success"});
 
         const me = await getUserByToken(data.result);
         if (me) setUser(me.result);
-
-        enqueueSnackbar("Успешный вход!", {variant: "success"});
       }
     } catch (err) {
       console.log(err);

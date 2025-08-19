@@ -17,7 +17,6 @@ export const FoldersAndChatsList = ({
 }: FoldersAndChatsListProps) => {
   const {chats, updateChat, deleteChat} = useChatContext();
   const {folders, addNewFolder, deleteFolder, updateFolderName} = useFolderContext();
-
   const [draggedChatId, setDraggedChatId] = useState<string | null>(null);
 
   const handleMoveChatToFolder = (chatId: string, folderId: string | null) => {
@@ -34,6 +33,10 @@ export const FoldersAndChatsList = ({
     const chat = chats[folderKey][chatId];
     if (!chat) return;
 
+    const currentFolderId = chat.folder?._id || null;
+
+    if (currentFolderId === folderId) return;
+
     const updatedChat: Chat = {
       ...chat,
       folder: folderId ? folders[folderId] : null,
@@ -41,6 +44,7 @@ export const FoldersAndChatsList = ({
 
     updateChat(chatId, updatedChat);
   };
+
   const addNewFolderHandler = async (folderName: string): Promise<string | null> => {
     const ownerId = useAuthStore.getState().user?._id;
 
@@ -54,11 +58,9 @@ export const FoldersAndChatsList = ({
     updateChat(chatId, {...chat, name: newName});
   };
 
-  const defaultChats = Object.values(chats["default"] || {});
-
   return (
     <>
-      <ListGroup style={{overflowY: "auto", height: "calc(100% - 45px)"}}>
+      <ListGroup style={{overflowY: "auto", height: "calc(100% - 46px)"}}>
         <FoldersList
           folders={foldersList}
           currentChatId={currentChatId}
@@ -102,7 +104,7 @@ export const FoldersAndChatsList = ({
           <ChatsList
             sortable
             dropFolderId={null}
-            chats={defaultChats}
+            chats={chatsList?.filter(c => !c.folder)}
             currentChatId={currentChatId}
             onSelectChat={(chatId: string) => handleSelectChat(chatId, null)}
             onRenameChat={renameChatHandler}

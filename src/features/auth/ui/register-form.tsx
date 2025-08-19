@@ -1,23 +1,27 @@
+"use client";
+
 import React, {useState, useRef} from "react";
 import {useRouter} from "next/router";
 import {useSnackbar} from "notistack";
 import {Form, Button, Container, Row, Col, Spinner} from "react-bootstrap";
 import {register} from "../api";
-import {getUserByToken} from "@/src/entities/user/api";
 import {useAuthStore} from "../model";
+import {getUserByToken} from "@/src/entities/user/api";
 
 export const RegisterForm = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [validated, setValidated] = useState(false);
   const router = useRouter();
   const {enqueueSnackbar} = useSnackbar();
-  const setUser = useAuthStore(state => state.setUser);
+  const {setUser, setIsAuthorization} = useAuthStore(state => state);
 
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setValidated(true);
 
     if (!username || !password) {
       enqueueSnackbar("Пожалуйста, заполните все поля.", {variant: "error"});
@@ -30,9 +34,10 @@ export const RegisterForm = () => {
       const data = await register({username, password});
 
       if (data.success) {
-        enqueueSnackbar("Регистрация успешна!", {variant: "success"});
         localStorage.setItem("token", data.result);
+        setIsAuthorization();
         router.push("/");
+        enqueueSnackbar("Регистрация успешна!", {variant: "success"});
 
         const me = await getUserByToken(data.result);
         if (me) setUser(me.result);
@@ -49,7 +54,7 @@ export const RegisterForm = () => {
       <Row className="justify-content-md-center mt-5">
         <Col xs={12} md={5} lg={4}>
           <h2 className="text-center mb-4">Регистрация</h2>
-          <Form noValidate onSubmit={handleSubmit}>
+          <Form noValidate validated={validated} onSubmit={handleSubmit}>
             <Form.Group controlId="formUsername" className="mb-3">
               <Form.Label>Имя пользователя</Form.Label>
               <Form.Control
@@ -59,7 +64,7 @@ export const RegisterForm = () => {
                 className="rounded-5"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
-                isInvalid={!username}
+                isInvalid={validated && !username}
               />
               <Form.Control.Feedback type="invalid">
                 Пожалуйста, введите имя пользователя.
@@ -75,7 +80,7 @@ export const RegisterForm = () => {
                 className="rounded-5"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                isInvalid={!password}
+                isInvalid={validated && !password}
               />
               <Form.Control.Feedback type="invalid">
                 Пожалуйста, введите пароль.

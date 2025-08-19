@@ -8,25 +8,30 @@ import {
   deleteChat as deleteChatApi,
 } from "@/src/entities/chat/api";
 import {useAuthStore} from "@/src/features/auth";
+import {enqueueSnackbar} from "notistack";
 
 interface ChatsContextType {
   chats: Record<string, Record<string, Chat>>;
+  setChats: React.Dispatch<React.SetStateAction<Record<string, Record<string, Chat>>>>;
   currentChatId: string | null;
   selectChat: (id: string | null) => void;
   addNewChat: (name: string, folderId: string, ownerId: string) => Promise<string>;
   updateChat: (chatId: string, chat: Chat) => Promise<void>;
   deleteChat: (chatId: string) => Promise<void>;
   loading: boolean;
+  loadingChatIds: Record<string, boolean>;
 }
 
 const Context = createContext<ChatsContextType>({
   chats: {},
+  setChats: () => {},
   currentChatId: null,
   selectChat: () => {},
   addNewChat: async () => "",
   updateChat: async () => {},
   deleteChat: async () => {},
   loading: true,
+  loadingChatIds: {},
 });
 
 export function useChatContext() {
@@ -39,6 +44,7 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
   const {isAuthorized} = useAuthStore();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [loadingChatIds, setLoadingChatIds] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchChats = async () => {
@@ -99,29 +105,35 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
   };
 
   const updateChatHandler = async (chatId: string, updatedChat: Chat) => {
-    let folderKey: string | null = null;
-
-    for (const key in chats) {
-      if (chats[key][chatId]) {
-        folderKey = key;
-        break;
-      }
-    }
-    if (!folderKey) return;
+    setLoadingChatIds(prev => ({...prev, [chatId]: true}));
 
     try {
       const res = await updateChat(chatId, updatedChat);
       if (res?.success) {
+        const folderKey = res.result.folder?._id || "default";
+
         setChats(prev => ({
           ...prev,
-          [folderKey!]: {
-            ...prev[folderKey!],
-            [chatId]: updatedChat,
+          [folderKey]: {
+            ...prev[folderKey],
+            [res.result._id]: res.result,
           },
         }));
+
+        enqueueSnackbar(
+          `Успешно ${folderKey === "default" ? "переименовано" : "перенесено"}`,
+          {variant: "success"}
+        );
       }
     } catch (e) {
       console.error("Failed to update chat:", e);
+      enqueueSnackbar("Ошибка при обновлении чата", {variant: "error"});
+    } finally {
+      setLoadingChatIds(prev => {
+        const copy = {...prev};
+        delete copy[chatId];
+        return copy;
+      });
     }
   };
 
@@ -134,7 +146,10 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
         break;
       }
     }
+
     if (!folderKey) return;
+
+    setLoadingChatIds(prev => ({...prev, [chatId]: true}));
 
     try {
       const res = await deleteChatApi(chatId);
@@ -154,7 +169,13 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
         }
       }
     } catch (e) {
-      console.error("Failed to delete chat:", e);
+      enqueueSnackbar("Ошибка при удалении чата", {variant: "error"});
+    } finally {
+      setLoadingChatIds(prev => {
+        const copy = {...prev};
+        delete copy[chatId];
+        return copy;
+      });
     }
   };
 
@@ -162,12 +183,14 @@ export function ChatProvider({children}: {children: React.ReactNode}) {
     <Context.Provider
       value={{
         chats,
+        setChats,
         currentChatId,
         selectChat: selectChatHandler,
         addNewChat: addNewChatHandler,
         updateChat: updateChatHandler,
         deleteChat: deleteChatHandler,
         loading,
+        loadingChatIds,
       }}
     >
       {children}

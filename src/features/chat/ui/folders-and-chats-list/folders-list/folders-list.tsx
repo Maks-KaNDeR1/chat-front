@@ -4,6 +4,7 @@ import {EditableListItem} from "../editable-list-item";
 import {ChatsList} from "../chats-list";
 import {ListGroup} from "react-bootstrap";
 import {Folder, FolderX} from "react-bootstrap-icons";
+import {useFolderContext} from "@/src/app/providers";
 
 interface ExtendedFoldersListProps extends FoldersListProps {
   draggedChatId: string | null;
@@ -27,6 +28,7 @@ export const FoldersList = ({
   setDraggedChatId,
 }: ExtendedFoldersListProps) => {
   const [hoveredFolderId, setHoveredFolderId] = useState<string | null>(null);
+  const {loadingFolderIds} = useFolderContext();
 
   return (
     <ListGroup>
@@ -76,6 +78,7 @@ export const FoldersList = ({
                 onSelect={(id: string) => onSelectFolder(isActive ? null : id)}
                 onRename={onRenameFolder}
                 onDelete={onDeleteFolder}
+                loading={!!loadingFolderIds[folder._id]}
               />
             </div>
             {isActive && (

@@ -1,14 +1,14 @@
 import React, {ReactNode} from "react";
 import {Container, Spinner} from "react-bootstrap";
 import {Header} from "../widgets/layout";
-import {useLoadingStore} from "../shared/store";
+import {useLoadingAppStore} from "../shared/store";
 
 type Props = {
   children: ReactNode;
 };
 
 export const Layout = ({children}: Props) => {
-  const isLoading = useLoadingStore(state => state.isLoading);
+  const isLoading = useLoadingAppStore(state => state.isLoading);
 
   return (
     <>

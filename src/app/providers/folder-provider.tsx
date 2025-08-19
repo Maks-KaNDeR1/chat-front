@@ -8,25 +8,30 @@ import {
   deleteFolder,
 } from "@/src/entities/folder/api";
 import {useAuthStore} from "@/src/features/auth";
+import {enqueueSnackbar} from "notistack";
 
 interface FoldersContextType {
   folders: Record<string, Folder>;
+  setFolders: React.Dispatch<React.SetStateAction<Record<string, Folder>>>;
   currentFolderId: string | null;
   addNewFolder: (name: string, ownerId: string) => Promise<string>;
   updateFolderName: (id: string, newName: string) => Promise<void>;
   deleteFolder: (id: string) => Promise<void>;
   selectFolder: (id: string | null) => void;
   loading: boolean;
+  loadingFolderIds: Record<string, boolean>;
 }
 
 const defaultContextValue: FoldersContextType = {
   folders: {},
+  setFolders: () => {},
   currentFolderId: null,
   addNewFolder: () => Promise.resolve(""),
   updateFolderName: async () => {},
   deleteFolder: async () => {},
   selectFolder: () => {},
   loading: true,
+  loadingFolderIds: {},
 };
 
 const Context = createContext<FoldersContextType>(defaultContextValue);
@@ -41,6 +46,7 @@ export function FoldersProvider({children}: {children: React.ReactNode}) {
   const router = useRouter();
   const isAuthorized = useAuthStore(state => state.isAuthorized);
   const [loading, setLoading] = useState(true);
+  const [loadingFolderIds, setLoadingFolderIds] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const fetchFolders = async () => {
@@ -81,18 +87,33 @@ export function FoldersProvider({children}: {children: React.ReactNode}) {
     const folder = folders[id];
     if (!folder) return;
 
-    const updatedFolder = {...folder, name: newName};
-    const res = await updateFolder(id, updatedFolder);
+    setLoadingFolderIds(prev => ({...prev, [id]: true}));
 
-    if (res.success) {
-      setFolders(prev => ({...prev, [id]: res.result}));
+    try {
+      const res = await updateFolder(id, newName);
+
+      if (res.success) {
+        setFolders(prev => ({...prev, [id]: res.result}));
+        enqueueSnackbar("Успешно переименовано", {variant: "success"});
+      }
+    } catch (e) {
+      console.error("Failed to rename folder:", e);
+      enqueueSnackbar("Ошибка при переименовании", {variant: "error"});
+    } finally {
+      setLoadingFolderIds(prev => {
+        const copy = {...prev};
+        delete copy[id];
+        return copy;
+      });
     }
   };
 
   const deleteFolderHandler = async (id: string) => {
+    setLoadingFolderIds(prev => ({...prev, [id]: true}));
+
     try {
       const res = await deleteFolder(id);
-      if (res?.result) {
+      if (res?.success) {
         setFolders(prev => {
           const updated = {...prev};
           delete updated[id];
@@ -106,6 +127,13 @@ export function FoldersProvider({children}: {children: React.ReactNode}) {
       }
     } catch (e) {
       console.error("Failed to delete folder:", e);
+      enqueueSnackbar("Ошибка при удалении", {variant: "error"});
+    } finally {
+      setLoadingFolderIds(prev => {
+        const copy = {...prev};
+        delete copy[id];
+        return copy;
+      });
     }
   };
 
@@ -123,6 +151,8 @@ export function FoldersProvider({children}: {children: React.ReactNode}) {
         deleteFolder: deleteFolderHandler,
         selectFolder,
         loading,
+        loadingFolderIds,
+        setFolders,
       }}
     >
       {children}

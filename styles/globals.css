@@ -43,6 +43,10 @@ a {
   text-decoration: none;
 }
 
+.custom-rounded-modal {
+  border-radius: 3rem !important;
+}
+
 .round-btn {
   width: 32px;
   height: 32px;
